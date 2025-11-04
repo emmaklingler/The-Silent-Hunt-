@@ -1,6 +1,6 @@
 {
   "name": "TheSilentHunt",
-  "servePort": 34900,
+  "servePort": 34872,
   "tree": {
     "$className": "DataModel",
     "ServerScriptService": {
@@ -17,14 +17,6 @@
         "$className": "StarterPlayerScripts",
         "$path": "src/StarterPlayer/StarterPlayerScripts"
       }
-    },
-    "StarterGui": {
-      "$className": "StarterGui",
-      "$path": "src/StarterGui"
-    },
-    "Workspace": {
-      "$className": "Workspace",
-      "$path": "src/Workspace"
     }
   }
 }
