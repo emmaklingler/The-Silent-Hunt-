@@ -21,5 +21,9 @@ function PlayerManager:RemoveRabbit(player)
     rabbits[player] = nil
 end
 
+function PlayerManager:GetAllRabbits()
+    return rabbits
+end
+
 
 return PlayerManager
