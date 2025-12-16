@@ -2,6 +2,10 @@
 local Rabbit = {}
 Rabbit.__index = Rabbit
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RemoteFolder = ReplicatedStorage:WaitForChild("Remote")
+local LifeEvent = RemoteFolder:WaitForChild("LifeChangeEvent")
+
 function Rabbit.new(player, profile)
     local self = setmetatable({}, Rabbit)
     self.Player = player
@@ -17,14 +21,18 @@ function Rabbit.new(player, profile)
     return self
 end
 
+local RemoteHunger = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("HungerChangeEvent")
 function Rabbit:TakeHunger(amount)
     self.Hunger -= amount
     --Si hunger < 0 Meurt
+    RemoteHunger:FireClient(self.Player, self.Hunger)
 end
 
+local RemoteLife = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
 function Rabbit:TakeDamage(amount)
     self.Health -= amount
     --Si health < 0 Meurt
+    RemoteLife:FireClient(self.Player, self.Health)
 end
 
 function Rabbit:MakeNoise(value)
@@ -53,6 +61,7 @@ function Rabbit:Spawn()
     self.Health = 100
     self.Hunger = 100
     self.Stress = 0
+
 end
 
 
