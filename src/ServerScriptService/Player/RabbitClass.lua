@@ -4,7 +4,6 @@ Rabbit.__index = Rabbit
 
 function Rabbit.new(player, profile)
     local self = setmetatable({}, Rabbit)
-
     self.Player = player
     self.Profile = profile -- ProfileService
     
@@ -32,11 +31,24 @@ function Rabbit:MakeNoise(value)
     --self.NoiseLevel = math.clamp(self.NoiseLevel + value, 0, 100)
 end
 
+local rabbitChar = game.ServerStorage.Asset:WaitForChild("RabbitCharacter")
 function Rabbit:Spawn()
-    local character = self.Player.Character or self.Player.CharacterAdded:Wait()
+    local player = self.Player
+
+	-- Supprimer l'ancien character s'il existe
+	if player.Character then
+		player.Character:Destroy()
+	end
+	
+	local character = rabbitChar:Clone()
+	character.Name = player.Name
+	character.Parent = workspace
+	
+	player.Character = character
     
     local spawnPoint = workspace.SpawnLocation
-    character:PivotTo(spawnPoint.CFrame)
+    character:PivotTo(spawnPoint.CFrame+Vector3.new(0, 5, 0))
+    
 
     self.Health = 100
     self.Hunger = 100

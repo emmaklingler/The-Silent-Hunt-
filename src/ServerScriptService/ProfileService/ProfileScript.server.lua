@@ -7,7 +7,7 @@ local ReplicateStorage = game:GetService("ReplicatedStorage")
 local Remote = ReplicateStorage.Remote
 
 local Players = game:GetService("Players")
-
+local PlayerManager = require(game.ServerScriptService.Player.PlayerManager)
 
 
 -- BASE DEV1 
@@ -21,7 +21,8 @@ local function DoSomethingWithALoadedProfile(player, profile)
 	--print(profile.Data)
 	profile.Data = ProfileTemplate --Pour reset
 	profile.Data.LogInTimes = profile.Data.LogInTimes + 1
-    
+    PlayerManager:CreateRabbit(player, profile):Spawn() --Pour Tester
+	
 end
 
 local function PlayerAdded(player)
