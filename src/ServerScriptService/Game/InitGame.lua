@@ -16,12 +16,13 @@ function GameManager:StartGame()
     --Init les systèmes
     HungerSystem:Init(PlayerManager:GetAllRabbits())
     --Démarre les systèmes
-    HungerSystem:Start()
+    task.spawn(function()
+        HungerSystem:Start()
+    end)
 
     --Pour chaque joueur on spawn le character
-    for _, player in pairs(Players:GetPlayers()) do
-        local rabbit = PlayerManager:GetRabbit(player)
-        rabbit:Spawn()    
+    for _, rabbit in PlayerManager:GetAllRabbits() do
+        rabbit:Spawn()
     end
 
     print("Game Started")

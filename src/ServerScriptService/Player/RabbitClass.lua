@@ -21,11 +21,9 @@ function Rabbit.new(player, profile)
     return self
 end
 
-local RemoteHunger = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("HungerChangeEvent")
 function Rabbit:TakeHunger(amount)
     self.Hunger -= amount
     --Si hunger < 0 Meurt
-    RemoteHunger:FireClient(self.Player, self.Hunger)
 end
 
 local RemoteLife = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
