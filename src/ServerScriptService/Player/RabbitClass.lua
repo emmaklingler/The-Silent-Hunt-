@@ -24,6 +24,10 @@ end
 function Rabbit:TakeHunger(amount)
     self.Hunger -= amount
     --Si hunger < 0 Meurt
+    if self.Hunger > 100 then
+        self.Hunger = 100
+    end
+
 end
 
 local RemoteLife = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")

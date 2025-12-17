@@ -1,9 +1,10 @@
 local PlayerManager = require(game.ServerScriptService.Player.PlayerManager)
 
-local Event = game.ReplicatedStorage.Remote:WaitForChild("EatCarrotEvent")
+local EatCarrotEvent = game.ReplicatedStorage.Remote:WaitForChild("EatCarrotEvent")
+local HungerChangeEvent = game.ReplicatedStorage.Remote:WaitForChild("HungerChangeEvent")
 
-Event.OnServerEvent:Connect(function(player)
-    print(PlayerManager:GetRabbit(player))
-    PlayerManager:GetRabbit(player):TakeDamage(10)
-    PlayerManager:GetRabbit(player):TakeHunger(10)
+
+EatCarrotEvent.OnServerEvent:Connect(function(player)
+    PlayerManager:GetRabbit(player):TakeHunger(-40)
+    HungerChangeEvent:FireClient(player, PlayerManager:GetRabbit(player).Hunger)
 end)
