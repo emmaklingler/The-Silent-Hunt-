@@ -3,7 +3,7 @@ local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
 -- Verrouille la caméra en vue première personne
-player.CameraMode = Enum.CameraMode.LockFirstPerson
+--player.CameraMode = Enum.CameraMode.LockFirstPerson
 
 -- Change la cible de la caméra au respawn
 player.CharacterAdded:Connect(function(character)
@@ -18,11 +18,6 @@ player:GetPropertyChangedSignal("CameraMode"):Connect(function()
 		player.CameraMode = Enum.CameraMode.LockFirstPerson
 	end
 end)
-
--- Désactive le mode souris verrouillée / avec tab
-local StarterGui = game:GetService("StarterGui")
-StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, true)
-player.DevEnableMouseLock = false
 
 --[[
 Désactive la souris ou non : 

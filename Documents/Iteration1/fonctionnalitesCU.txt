@@ -1,0 +1,29 @@
+Game : Hugo
+- Initialise partie au start
+- Gestionnaire de joueur / classe 
+- Système sauvegarde BD (début)
+- Système de faim : Noah, diagramme de séquence "DiagrammeSeqSystemFaim.png"
+
+Lapin : Hugo
+- Mouvement classique
+- Mouvement saut
+- Modèle 3D + Animation
+- Première personne lock
+
+Action : Noah
+- Manger une carrot
+
+UI : Noah
+- Bar Vie 
+- Bar Faim 
+
+Map : Noah
+- Début de map
+
+Chasseur : Emma
+- ...
+
+
+
+
+
