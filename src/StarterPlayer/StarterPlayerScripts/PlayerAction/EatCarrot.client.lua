@@ -6,5 +6,6 @@ local Event = game.ReplicatedStorage.Remote.EatCarrotEvent
 Prompt.Triggered:Connect(function(playerHit)
     if playerHit == Player then
        Event:FireServer()
+       Carrot:Destroy()
     end
 end)
