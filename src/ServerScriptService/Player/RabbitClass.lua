@@ -35,7 +35,9 @@ end
 
 local RemoteLife = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
 function Rabbit:TakeDamage(amount)
-    self.Health -= amount
+    if self.Health > 0 then
+        self.Health -= amount
+    end
     --Si health < 0 Meurt
     RemoteLife:FireClient(self.Player, self.Health)
 end
