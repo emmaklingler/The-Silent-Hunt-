@@ -22,7 +22,7 @@ function Rabbit.new(player, profile)
 end
 
 function Rabbit:TakeHunger(amount)
-    if self.Hunger > 0 then
+    if self.Hunger > 0 or amount == -40 then
         self.Hunger -= amount
         --Si hunger < 0 Meurt
         if self.Hunger > 100 then
@@ -35,7 +35,9 @@ end
 
 local RemoteLife = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
 function Rabbit:TakeDamage(amount)
-    self.Health -= amount
+    if self.Health > 0 then
+        self.Health -= amount
+    end
     --Si health < 0 Meurt
     RemoteLife:FireClient(self.Player, self.Health)
 end
