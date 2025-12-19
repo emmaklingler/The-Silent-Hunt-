@@ -1,50 +1,47 @@
---- AttackTarget.lua 
-local Node = script.Parent
-assert(Node, "Selector.lua has no parent")
-
-local Utiles = Node.Parent
-assert(Utiles, "Selector.lua must be inside a folder under Utiles")
-
-local StatusFolder = Utiles:WaitForChild("Status")
-local Status = require(StatusFolder:WaitForChild("Status"))
-
-local FollowTarget = {}
-FollowTarget.__index = FollowTarget
-
-function FollowTarget.new(stopDist)
-	return setmetatable({ stopDist = stopDist or 6 }, FollowTarget)
-end
+local actionNode = script.Parent
+local Status = require(actionNode.Parent.Utiles.Status.Status)
 
 local AttackTarget = {}
 AttackTarget.__index = AttackTarget
 
+-- création du noeud d'attaque avec portée et cooldown
 function AttackTarget.new(range, cooldown)
-	return setmetatable({
-		range = range or 5,
-		cooldown = cooldown or 1.2,
-		lastAttack = 0,
-	}, AttackTarget)
+    return setmetatable({
+        range = range or 7,
+        cooldown = cooldown or 1.5,
+        lastAttack = 0
+    }, AttackTarget)
 end
 
+-- exécution de la logique d'attaque
 function AttackTarget:Run(hunter, bb)
-	if not hunter.Target or not hunter.Target.PrimaryPart then
-		return Status.FAILURE
-	end
+    local target = hunter.Target
+    if not target or not target:FindFirstChild("Humanoid") then return Status.FAILURE end
 
-	local dist = hunter:GetDistanceTo(hunter.Target)
-	if dist > self.range then
-		return Status.FAILURE
-	end
+    local dist = hunter:GetDistanceTo(target)
+    
+    -- vérification de la distance pour attaquer
+    if dist > self.range then
+        return Status.FAILURE
+    end
 
-	self.lastAttack += (bb.dt or 0)
-	if self.lastAttack < self.cooldown then
-		return Status.RUNNING
-	end
+    -- gestion du temps d'attente entre deux attaques
+    local now = tick()
+    if now - self.lastAttack < self.cooldown then
+        hunter:StopMoving()
+        return Status.RUNNING 
+    end
 
-	self.lastAttack = 0
-	print("Chasseur attaque chasse !")
+    -- lancement de l'attaque
+    self.lastAttack = now
+    print("Attaque Target: le chasseur frappe " .. target.Name)
+    
+    -- application des dégâts sur la cible
+    target.Humanoid:TakeDamage(20)
+    
+    
 
-	return Status.SUCCESS
+    return Status.SUCCESS
 end
 
 return AttackTarget

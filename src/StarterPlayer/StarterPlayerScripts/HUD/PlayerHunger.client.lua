@@ -17,7 +17,9 @@ end
 local function Start()
     while true do
         task.wait(1)
-        faim-=1
+		if faim > 0 then
+			faim-=1
+		end
 		UpdateBar()
     end
 end

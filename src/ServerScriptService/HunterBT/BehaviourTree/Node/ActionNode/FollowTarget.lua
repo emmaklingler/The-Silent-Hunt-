@@ -1,40 +1,39 @@
--- FollowTarget.lua
-local scriptParent = script.Parent :: Instance
-local nodeFolder = scriptParent.Parent :: Instance
-local utilesFolder = nodeFolder:WaitForChild("Utiles")
+local actionNode = script.Parent
+local utilesFolder = actionNode.Parent:WaitForChild("Utiles")
+local Status = require(utilesFolder:WaitForChild("Status"):WaitForChild("Status"))
 
-local statusModule = utilesFolder:WaitForChild("Status"):WaitForChild("Status") :: ModuleScript
-local Status = require(statusModule)
 local FollowTarget = {}
 FollowTarget.__index = FollowTarget
 
+-- création du noeud de poursuite avec distance d'arrêt
 function FollowTarget.new(stopDist)
     return setmetatable({ stopDist = stopDist or 6 }, FollowTarget)
 end
 
-local function getMainPart(model: Model): BasePart?
-    return model.PrimaryPart or model:FindFirstChild("HumanoidRootPart") :: BasePart?
-end
-
+-- exécution du déplacement vers la cible
 function FollowTarget:Run(hunter, bb)
     local target = hunter.Target
-    if not target then return Status.FAILURE end
+    if not target or not target.PrimaryPart then return Status.FAILURE end
 
-    local hunterPart = hunter.Model.PrimaryPart
-    local targetPart = target.PrimaryPart or target:FindFirstChild("HumanoidRootPart")
+    local dist = hunter:GetDistanceTo(target)
 
-    if not hunterPart or not targetPart then return Status.FAILURE end
+    -- réglage de la vitesse de course
+    if hunter.Humanoid then
+        hunter.Humanoid.WalkSpeed = 24 
+    end
 
-    local dist = (targetPart.Position - hunterPart.Position).Magnitude
-
+    -- gestion de la proximité pour rester collé à la cible pendant l'attaque
     if dist <= self.stopDist then
-        hunter:StopMoving()
+        hunter:MoveTo(target.PrimaryPart.Position)
+        print("FollowTarget: cible a portee, maintien de la position")
         return Status.SUCCESS
     end
 
-    if hunter.Humanoid then hunter.Humanoid.WalkSpeed = 20 end
-
-    hunter:MoveTo(targetPart.Position)
+    -- poursuite classique
+    print("FollowTarget: poursuite de " .. target.Name)
+    hunter:MoveTo(target.PrimaryPart.Position)
+    
     return Status.RUNNING
 end
+
 return FollowTarget
