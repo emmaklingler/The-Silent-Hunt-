@@ -22,7 +22,7 @@ function Rabbit.new(player, profile)
 end
 
 function Rabbit:TakeHunger(amount)
-    if self.Hunger > 0 then
+    if self.Hunger > 0 or amount == -40 then
         self.Hunger -= amount
         --Si hunger < 0 Meurt
         if self.Hunger > 100 then
