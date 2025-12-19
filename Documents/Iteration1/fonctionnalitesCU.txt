@@ -21,7 +21,11 @@ Map : Noah
 - Début de map
 
 Chasseur : Emma
-- ...
+- Arbre de décision BT
+- Condition de vue sur le joueur
+- Patrouille
+- Attaque simple
+- Chasse
 
 
 
