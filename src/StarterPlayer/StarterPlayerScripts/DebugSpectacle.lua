@@ -1,56 +1,31 @@
--- DebugSpectate.client.lua
 local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
+local UIS = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
--- 🔎 Trouve le chasseur
-local function getHunter()
-	return workspace:FindFirstChild("Humans_Master")
+-- On utilise une variable pour le nom pour pouvoir le changer facilement
+local HUNTER_NAME = "Humans_Master_off" 
+
+local function spectate(target)
+    if not target then return end
+    
+    -- Pour un modèle, on cible l'Humanoid pour que la caméra soit fluide
+    local subject = target:FindFirstChildOfClass("Humanoid") or target.PrimaryPart
+    
+    if subject then
+        camera.CameraType = Enum.CameraType.Custom
+        camera.CameraSubject = subject
+        print("🎥 Caméra fixée sur :", target.Name)
+    end
 end
 
--- 🔎 Trouve le lapin (joueur)
-local function getRabbit()
-	local char = player.Character
-	if not char then return nil end
-	return char:FindFirstChildOfClass("Humanoid") or char.PrimaryPart
-end
+UIS.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
 
--- 🎥 Spectate un modèle
-local function spectateModel(model)
-	if not model then return end
-
-	local part =
-		model.PrimaryPart
-		or model:FindFirstChild("HumanoidRootPart")
-		or model:FindFirstChild("RootPart")
-
-	if not part then
-		warn("❌ Impossible de spectate :", model.Name)
-		return
-	end
-
-	camera.CameraType = Enum.CameraType.Custom
-	camera.CameraSubject = part
-end
-
--- 🎮 Inputs
-UserInputService.InputBegan:Connect(function(input, gp)
-	if gp then return end
-
-	-- F6 = spectate chasseur
-	if input.KeyCode == Enum.KeyCode.F6 then
-		print("👁️ Spectate Hunter")
-		spectateModel(getHunter())
-	end
-
-	-- F7 = retour joueur
-	if input.KeyCode == Enum.KeyCode.F7 then
-		print("👤 Retour joueur")
-		local subject = getRabbit()
-		if subject then
-			camera.CameraSubject = subject
-		end
-	end
+    if input.KeyCode == Enum.KeyCode.C then
+        spectate(workspace:FindFirstChild(HUNTER_NAME))
+    elseif input.KeyCode == Enum.KeyCode.L then
+        spectate(player.Character)
+    end
 end)
