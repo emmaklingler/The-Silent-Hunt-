@@ -1,23 +1,20 @@
---- Sequence.lua
-local Node = script.Parent
-assert(Node, "Selector.lua has no parent")
-
-local Utiles = Node.Parent
-assert(Utiles, "Selector.lua must be inside a folder under Utiles")
-
-local StatusFolder = Utiles:WaitForChild("Status")
-local Status = require(StatusFolder:WaitForChild("Status"))
-
+local Status = require(script.Parent:WaitForChild("Status"))
 
 local Sequence = {}
 Sequence.__index = Sequence
 
+--[[
+	Sequence node: éxécute chaque enfant dans l'ordre jusqu'à ce qu'un enfant échoue ou soit en cours d'exécution.
+	Si un enfant échoue, le Sequence retourne FAILURE.
+	@children: table - une liste de noeuds enfants
+]]
 function Sequence.new(children)
 	return setmetatable({ children = children or {} }, Sequence)
 end
 
+-- Exécute le noeud Sequence
 function Sequence:Run(entity, blackboard)
-	for _, child in ipairs(self.children) do
+	for _, child in self.children do
 		local s = child:Run(entity, blackboard)
 		if s == Status.FAILURE then return Status.FAILURE end
 		if s == Status.RUNNING then return Status.RUNNING end

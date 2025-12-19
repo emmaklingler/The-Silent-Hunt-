@@ -6,28 +6,37 @@ local HungerEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("Hunge
 local Player = Players.LocalPlayer
 local PlayerGui = Player.PlayerGui
 
-local faim = 0
+local satiety = 0
 local start = false
 
+--[[
+	Met a jour la barre de faim en fonction de la satiety
+]]
 local function UpdateBar()
 	local BarreDeFaim = PlayerGui:WaitForChild("HUD").SG_HUD.Faim.Bar.Frame
-	BarreDeFaim.Size = UDim2.new(faim/100, 0, 1, 0)
+	BarreDeFaim.Size = UDim2.new(satiety/100, 0, 1, 0)
 end
 
+--[[
+	Début de la boucle de diminution de la faim
+]]
 local function Start()
     while true do
         task.wait(1)
-		if faim > 0 then
-			faim-=1
+		if satiety > 0 then
+			satiety-=1
 		end
 		UpdateBar()
     end
 end
 
-
-HungerEvent.OnClientEvent:Connect(function(hunger)
-	faim = hunger
+--[[
+	Événement déclenché lorsque la valeur de la faim change côté serveur
+]]
+HungerEvent.OnClientEvent:Connect(function(satietyValue)
+	satiety = satietyValue
 	if not start then
+		-- Si pas encore démarré, lance la boucle de diminution de la faim
 		start = true
 		task.spawn(Start)
 	end

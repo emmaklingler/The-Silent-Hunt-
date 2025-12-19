@@ -73,7 +73,6 @@ local function Jump()
         UP_FORCE * hrp.AssemblyMass,
         dir.Z * JUMP_FORCE * hrp.AssemblyMass
     ))
-    print("apply impulse")
    
 
     if idleTrack.IsPlaying then
@@ -111,22 +110,21 @@ RunService.RenderStepped:Connect(function(dt)
 
     if IsGrounded() and wasGrounded and jumpRequested and jumpCooldown <= 0 then    
         Jump() 
-        print("jump")
     end
     if IsGrounded() and state ~= "Jumping" then
         if humanoid.MoveDirection.Magnitude > 0 and state ~= "Running" then
-            print("run")
+            
             state = "Running"
             idleTrack:Stop()
             runTrack:Play()
         elseif humanoid.MoveDirection.Magnitude == 0 then
-            print("idle")
+          
             state = "Idle"
             runTrack:Stop()
         end
     end
     if not wasGrounded and IsGrounded() and state == "Jumping" then
-        print("land")
+       
         state = humanoid.MoveDirection.Magnitude > 0 and "Running" or "Idle"
 
         local hrp = character.HumanoidRootPart

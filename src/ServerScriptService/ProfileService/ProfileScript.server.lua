@@ -4,7 +4,6 @@ local ProfileService = require(game.ServerScriptService.ProfileService.ProfileSe
 local Manager = require(game.ServerScriptService.ProfileService.Manager)
 
 local ReplicateStorage = game:GetService("ReplicatedStorage")
-local Remote = ReplicateStorage.Remote
 
 local Players = game:GetService("Players")
 local PlayerManager = require(game.ServerScriptService.Player.PlayerManager)
@@ -22,6 +21,7 @@ local function DoSomethingWithALoadedProfile(player, profile)
 	profile.Data = ProfileTemplate --Pour reset
 	profile.Data.LogInTimes = profile.Data.LogInTimes + 1
     PlayerManager:CreateRabbit(player, profile) -- Créer le rabbit du joueur
+	
 	-- POUR TEST COMMENC LA GAME
 	InitGame:StartGame()
 end  

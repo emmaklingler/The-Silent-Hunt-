@@ -2,6 +2,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Remote = ReplicatedStorage:WaitForChild("Remote")
 local RemoteDef = ReplicatedStorage:WaitForChild("RemoteDef")
 
+-- Initialisation des RemoteEvents et RemoteFunctions
+-- Boucle à travers les modules dans RemoteDef et crée les remotes correspondantes
 for _, module in RemoteDef:GetChildren() do
     if module:IsA("ModuleScript") then
         local remoteInfo = require(module)
