@@ -1,59 +1,53 @@
---- CanseeTarget.lua
-local conditionNode = script.Parent
-assert(conditionNode, "Script must have a parent")
+local actionNode = script.Parent
+local Status = require(actionNode.Parent.Utiles.Status.Status)
 
-local nodeFolder = conditionNode.Parent
-assert(nodeFolder, "ConditionNode must be inside Node folder")
-
-local Utiles = nodeFolder:WaitForChild("Utiles")
-local StatusModule = Utiles:WaitForChild("Status"):WaitForChild("Status")
-local Status = require(StatusModule :: ModuleScript)
 local CanSeeTarget = {}
 CanSeeTarget.__index = CanSeeTarget
 
-function CanSeeTarget.new(maxDist, fieldOfView)
-    return setmetatable({ 
+-- création du noeud de vision avec distance et angle de vue
+function CanSeeTarget.new(maxDist, fov)
+    return setmetatable({
         maxDist = maxDist or 60,
-        fov = fieldOfView or 120 
+        fov = fov or 120,
+        memoryTime = 2, -- temps pour garder la cible en mémoire
+        lastSeenTick = 0
     }, CanSeeTarget)
 end
 
-local function getMainPart(model: Model)
-    return model.PrimaryPart or model:FindFirstChild("HumanoidRootPart")
-end
-
+-- exécution de la détection de la cible
 function CanSeeTarget:Run(hunter, bb)
     local target = hunter.Target
-    if not target or not target.Parent then return Status.FAILURE end
+    if not target or not target.PrimaryPart then return Status.FAILURE end
 
-    local hunterPart = getMainPart(hunter.Model)
-    local targetPart = getMainPart(target)
-
-    if not hunterPart or not targetPart then return Status.FAILURE end
-
-   
+    local hunterPart = hunter.Model.PrimaryPart
+    local targetPart = target.PrimaryPart
     local vectorToTarget = targetPart.Position - hunterPart.Position
     local distance = vectorToTarget.Magnitude
-    if distance > self.maxDist then return Status.FAILURE end
 
-   
-    local lookVector = hunterPart.CFrame.LookVector
-    local unitToTarget = vectorToTarget.Unit
-    local dotProduct = lookVector:Dot(unitToTarget)
-    local angle = math.deg(math.acos(dotProduct))
-
-    if angle > (self.fov / 2) then
-        return Status.FAILURE
+    -- détection automatique si le joueur est collé au chasseur
+    if distance < 15 then
+        self.lastSeenTick = tick()
+        return Status.SUCCESS
     end
 
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {hunter.Model} 
-    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    -- calcul pour savoir si la cible est dans le champ de vision
+    local dot = hunterPart.CFrame.LookVector:Dot(vectorToTarget.Unit)
+    local angle = math.deg(math.acos(math.clamp(dot, -1, 1)))
+    
+    if distance <= self.maxDist and angle <= (self.fov / 2) then
+        -- vérification des obstacles avec un raycast
+        local params = RaycastParams.new()
+        params.FilterDescendantsInstances = {hunter.Model}
+        local ray = workspace:Raycast(hunterPart.Position, vectorToTarget, params)
+        
+        if ray and ray.Instance:IsDescendantOf(target) then
+            self.lastSeenTick = tick()
+            return Status.SUCCESS
+        end
+    end
 
-    local rayResult = workspace:Raycast(hunterPart.Position, vectorToTarget, raycastParams)
-
-    if rayResult and rayResult.Instance:IsDescendantOf(target) then
-        bb.lastSeenPos = targetPart.Position
+    -- maintien de la cible en mémoire pour éviter les saccades
+    if tick() - self.lastSeenTick < self.memoryTime then
         return Status.SUCCESS
     end
 
