@@ -1,1 +1,19 @@
-Bilan Itération 1 : 
+Bilan Itération 1
+Durant cette itération, nous avons réalisé de nombreuses fonctionnalités. 
+Nous avons suivi le plan établi lors de l'étude préalable pour obtenir une première version jouable du jeu. 
+
+Nous disposons d'un lapin jouable et animé, capable de se déplacer dans l'environnement. 
+Il possède une barre de vie et une barre de faim fonctionnelles, la faim diminuant progressivement au fil du temps. 
+Pour la restaurer, nous avons ajouté un premier objet récupérable par le joueur : une carotte qui augmente la faim. 
+
+Nous avons également mis en place le chasseur. 
+Bien qu'encore au début de son développement, il se déplace de manière aléatoire et si il repère le lapin, se dirige vers lui. 
+Si le lapin se trouve dans sa zone, il attaque, pour l'instant, cela se traduit par un simple affichage dans la console.
+
+Tout cela est jouable sur une petite carte de test représentant une forêt. 
+
+Cependant, un bug notable devra être corrigé lors de la prochaine itération : 
+de manière aléatoire, le lapin se met à voler dans le ciel. 
+
+Cette première itération a permis à Noah et Emma de prendre en main Lua et de bien comprendre son fonctionnement. 
+Nous sommes désormais à l'aise avec ce langage et, en cas de question, nous pouvons demander de l'aide à Hugo.
