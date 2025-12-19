@@ -20,12 +20,50 @@ UI : Noah
 Map : Noah
 - Début de map
 
-Chasseur : Emma
-- Arbre de décision BT
-- Condition de vue sur le joueur
+Chasseur :  fait par Emma
+- Arbre de décision BT 
+    ->structure de noeuds avec selector et sequneces
+- Condition de vue sur le lapin
+    -> Le chasseur detecte le lapin dans un périmètre donné 
 - Patrouille
+    -> La chasseur patrouille aléatoirement jusqu'à détection 
 - Attaque simple
+    -> lorsque le chasseur vérouille sa cible durant un certain temps et que le lapin est assez proche il attaque 
 - Chasse
+
+SCENARIO 
+1. Phase Initiale : Patrouille Autonome
+Dès le lancement du serveur, le script HunterBT.server.lua initialise l'instance du chasseur. 
+Comme aucun lapin n'est encore détecté dans son périmètre, le Selector échoue sur la première branche (Chasse) et exécute la seconde : Patrol.
+
+•	Action : Le chasseur définit un point aléatoire entre 40 et 80 studs de sa position.
+•	Mouvement : Il se déplace à une vitesse de 14.
+•	Navigation : La méthode MoveTo de la classe Hunter vérifie la distance. Si le point est à plus de 15 studs, elle utilise PathfindingService pour calculer un chemin contournant les obstacles.
+•	Boucle : Toutes les 6 secondes ou une fois arrivé au point, le chasseur recalcule une nouvelle destination pour simuler un gardien vigilant.
+
+2. Phase de Détection : Le Lapin entre en zone
+Un joueur (le Lapin) s'approche à moins de 60 studs du chasseur.
+•	Scan Visuel : Le nœud CanSeeTarget s'exécute. Il vérifie d'abord l'angle de vue (FOV de 120°).
+•	Raycasting : Si le lapin est devant le chasseur, un rayon est lancé du chasseur vers le lapin pour s'assurer qu'aucun mur ne bloque la vue.
+•	Résultat : Si le rayon touche le lapin, le nœud renvoie SUCCESS. La branche "Chasse" du Selector devient prioritaire.
+3. Phase de Chasse : La Poursuite
+Le comportement change instantanément. Le chasseur abandonne sa routine de patrouille.
+•	Accélération : La vitesse passe de 14 à 24.
+•	Maintien : Le nœud FollowTarget ordonne au chasseur de se diriger vers la PrimaryPart du lapin.
+•	Mémoire : Si le lapin passe brièvement derrière un arbre, le paramètre memoryTime (2 secondes) permet au chasseur de continuer la poursuite au lieu de s'arrêter net.
+4. Phase de Combat : L'Attaque
+Le chasseur arrive à proximité immédiate du joueur.
+•	Portée : Dès que la distance est inférieure à 7 studs, le nœud AttackTarget s'active.
+•	Frappe : Si le cooldown de 1.2s est écoulé, le chasseur inflige 20 points de dégâts via target.Humanoid:TakeDamage(20).
+•	Immobilisation : Pendant le cooldown, le chasseur appelle StopMoving() pour rester face au joueur et préparer le prochain coup.
+
+5. Phase de Rupture : Perte de Cible ou Mort
+Le scénario se termine de deux manières :
+•	Fuite réussie : Si le lapin s'éloigne au-delà de 60 studs ou reste caché plus de 2 secondes, CanSeeTarget renvoie FAILURE. Le chasseur retourne immédiatement à l'étape 1 (Patrouille).
+•	Élimination : Si les points de vie du lapin tombent à 0, le tag IsRabbit n'est plus détecté par la boucle principale du serveur. Le chasseur perd sa Target et reprend sa patrouille aléatoire.
+
+
+
 
 
 

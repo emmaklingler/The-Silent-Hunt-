@@ -17,3 +17,16 @@ de manière aléatoire, le lapin se met à voler dans le ciel.
 
 Cette première itération a permis à Noah et Emma de prendre en main Lua et de bien comprendre son fonctionnement. 
 Nous sommes désormais à l'aise avec ce langage et, en cas de question, nous pouvons demander de l'aide à Hugo.
+
+
+Emma :
+L'itération actuelle a permis de valider la structure globale du Behavior Tree, mais révèle un découplage insuffisant entre le moteur 
+physique et la logique métier. Le chasseur interagit avec l'instance physique (Humanoid) au lieu de manipuler la classe Rabbit. 
+De plus, la patrouille est linéaire et vulnérable aux obstacles ; l'intégration du PathfindingService est indispensable pour la prochaine étape. 
+Enfin, le système de combat doit être migré de la santé native de Roblox vers les attributs de notre classe Rabbit pour supporter 
+le système de stress et de faim.
+Le système de dégâts est actuellement géré par les propriétés natives de l'Humanoid de Roblox, ignorant totalement la logique de la RabbitClass. 
+Il y a une absence de pont entre l'IA et les variables de gameplay (Health, Hunger, Stress)
+La difficulté principale a résidé dans l'articulation entre les instances natives de Roblox (moteur physique et propriétés Humanoid) et mes propres classes logiques, 
+rendant complexe la définition des points de connexion pour l'instanciation et l'interaction des systèmes.
+Maintenant que j'ai compris lors de la prochaine itération je pourrai rapidement tout reconnecter et utiliser les bons systèmes.
