@@ -29,7 +29,7 @@ end
 --[[
     Enleve de la satiety au lapin. 
     Si la satiety est a 0, enleve de la vie.
-    amount: nombre a enlever
+    @param amount: nombre a enlever
 ]]
 function Rabbit:RemoveSatiety(amount)
     if self.Satiety > 0 or amount == -40 then
@@ -45,7 +45,7 @@ end
 
 --[[
     Ajoute de la satiety au lapin.
-    amount: nombre a ajouter
+    @param amount: nombre a ajouter
 ]]
 function Rabbit:AddSatiety(amount)
     self.Satiety += amount
@@ -56,7 +56,7 @@ end
 
 --[[
     Enleve de la vie au lapin.
-    amount: nombre a enlever
+    @param amount: nombre a enlever
 ]]
 function Rabbit:RemoveHealth(amount)
     if self.Health > 0 then
@@ -73,6 +73,7 @@ end
 
 --[[
     Fait du bruit
+    @param value: le volume du bruit
 ]]
 function Rabbit:MakeNoise(value)
     --self.NoiseLevel = math.clamp(self.NoiseLevel + value, 0, 100)

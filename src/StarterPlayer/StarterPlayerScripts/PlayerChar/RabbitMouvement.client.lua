@@ -11,7 +11,6 @@ local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid") 
 local animator = humanoid:WaitForChild("Animator")
 humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false) 
-humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
 
 -- Animations 138414084300181
 local idleAnim = Instance.new("Animation") 
@@ -34,7 +33,6 @@ player.CharacterAdded:Connect(function(char)
     animator = humanoid:WaitForChild("Animator") 
 
     humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false) 
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false) 
 
     idleTrack = animator:LoadAnimation(idleAnim) 
     jumpTrack = animator:LoadAnimation(jumpAnim) 
@@ -79,6 +77,10 @@ local function Jump()
         idleTrack:Stop()
     end
     jumpTrack:Play()
+    --Pour être sûr
+    task.delay(5, function()
+        state = "Idle"
+    end)
 end
 
 -- Pour le jump : 
@@ -135,6 +137,8 @@ RunService.RenderStepped:Connect(function(dt)
     
     wasGrounded = IsGrounded()
     jumpRequested = false
+    print(state)
+    print(wasGrounded)
 end)
 
 
