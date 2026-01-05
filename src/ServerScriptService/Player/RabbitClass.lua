@@ -32,12 +32,9 @@ end
     @param amount: nombre a enlever
 ]]
 function Rabbit:RemoveSatiety(amount)
-    if self.Satiety > 0 or amount == -40 then
+    if self.Satiety > 0 then
         self.Satiety -= amount
         --Si satiety < 0 Meurt
-        if self.Satiety > 100 then
-            self.Satiety = 100
-        end
     else
         self:RemoveHealth(1)
     end
@@ -85,7 +82,7 @@ local rabbitChar = game.ServerStorage.Asset:WaitForChild("RabbitCharacter")
 ]]
 function Rabbit:Spawn()
     local player = self.Player
-
+ 
 	-- Supprimer l'ancien character s'il existe
 	if player.Character then
 		player.Character:Destroy()

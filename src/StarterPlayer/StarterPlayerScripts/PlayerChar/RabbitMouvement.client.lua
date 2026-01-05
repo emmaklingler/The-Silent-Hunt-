@@ -137,8 +137,6 @@ RunService.RenderStepped:Connect(function(dt)
     
     wasGrounded = IsGrounded()
     jumpRequested = false
-    print(state)
-    print(wasGrounded)
 end)
 
 
