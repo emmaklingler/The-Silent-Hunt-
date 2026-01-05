@@ -26,7 +26,7 @@ ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state:
         idleTrack = animator:LoadAnimation(idleAnim)
         walkTrack = animator:LoadAnimation(walkAnim)
         attackTrack = animator:LoadAnimation(attackAnim)
-        idleTrack.looped = true
+        idleTrack.Looped = true
     end
 
     if state == "Idle" then

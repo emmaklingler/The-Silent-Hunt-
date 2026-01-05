@@ -1,15 +1,20 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Player = game.Players.LocalPlayer
 local EatCarrotEvent = ReplicatedStorage.Remote:WaitForChild("EatCarrotEvent")
-
-local Carrot = workspace:WaitForChild("Carrot",5)
-local Prompt = Carrot.ProximityPrompt
+local CreateCarrotEvent = ReplicatedStorage.Remote:WaitForChild("CreateCarrotEvent")
 
 --[[
     Gestion de l'événement lorsque le joueur interagit avec la carotte.
 ]]
-Prompt.Triggered:Connect(function(playerHit)
-    if playerHit == Player then
-       EatCarrotEvent:FireServer(Carrot)
-    end
+CreateCarrotEvent.OnClientEvent:Connect(function(carrotName)
+    if not carrotName then return end
+    local carrot = workspace:WaitForChild(carrotName) 
+    -- attendre que tout soit bien répliqué
+    local prompt = carrot:WaitForChild("ProximityPrompt")
+
+    prompt.Triggered:Connect(function(playerHit)
+        if playerHit == Player then
+            EatCarrotEvent:FireServer(carrot)
+        end
+    end)
 end)

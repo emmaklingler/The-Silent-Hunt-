@@ -15,16 +15,20 @@ function HungerSysteme:Init(players)
     end
 end
 
+
+local time = 0
+local delay = 1
 --[[
-    Commence la boucle qui vas enlever de la faim à tous les joueurs
+    Toutes les secondes enlèvent de la faim à tous les joueur
 ]]
-function HungerSysteme:Start()
-    while true do
-        task.wait(1)
+function HungerSysteme:Tick(dt)
+    time += dt
+    if time >= delay then
+        time = 0
         for player, RabbitClass in listPlayer do
             RabbitClass:RemoveSatiety(1)
         end
-    end
+    end  
 end
 
 
