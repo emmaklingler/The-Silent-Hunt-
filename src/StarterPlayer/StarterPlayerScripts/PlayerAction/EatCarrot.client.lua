@@ -2,7 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Player = game.Players.LocalPlayer
 local EatCarrotEvent = ReplicatedStorage.Remote:WaitForChild("EatCarrotEvent")
 
-local Carrot = workspace:WaitForChild("Carrot")
+local Carrot = workspace:WaitForChild("Carrot",5)
 local Prompt = Carrot.ProximityPrompt
 
 --[[
