@@ -20,14 +20,9 @@ function AttackTarget:Run(chasseur, blackboard)
 	end
 
 	local result = chasseur:TryAttack(target)
-
-	if result == "running" then
-		return Status.RUNNING
-	elseif result == "finished" then
-		return Status.SUCCESS
-	end
-
-	return Status.FAILURE
+	print("AttackTarget result:", result)
+	
+	return result
 end
 
 return AttackTarget 
