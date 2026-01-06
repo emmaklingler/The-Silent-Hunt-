@@ -23,6 +23,8 @@ function Rabbit.new(player, profile)
     self.Stress = 0
     self.NoiseLevel = 0
 
+    self.EstCache = false
+
     return self
 end
 
@@ -58,6 +60,15 @@ function Rabbit:AddSatiety(amount)
         self.Satiety = 100
     end
 end
+
+--[[
+    Met le lapin en mode caché.
+]]
+function Rabbit:SeCacher()
+    self.EstCache = not self.EstCache
+    print(self.Player.Name .. " est caché: " .. tostring(self.EstCache))
+end
+
 
 --[[
     Enleve de la vie au lapin.
