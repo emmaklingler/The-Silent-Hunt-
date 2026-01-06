@@ -21,12 +21,15 @@ local blackboard = Blackboard.new()
 
 -- Définition de l'arbre de comportement du chasseur
 local BT =  Selector.new({
-
+    
+    Sequence.new({
+        CanSeeTarget.new(8),
+        AttackTarget.new()
+    }),
     -- Arbre simple ici, si le chasseur peut voir une cible, il la suit et l'attaque, sinon il patrouille
     Sequence.new({
-        CanSeeTarget.new(),
-        FollowTarget.new(),
-        AttackTarget.new()
+        CanSeeTarget.new(40),
+        FollowTarget.new()
     }),
     Patrol.new()
 

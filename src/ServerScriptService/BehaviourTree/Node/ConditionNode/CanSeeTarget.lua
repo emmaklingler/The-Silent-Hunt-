@@ -3,9 +3,9 @@ CanSeeTarget.__index = CanSeeTarget
 local Status = require(script.Parent.Parent.Utiles.Status)
 local PlayerManager = require(game.ServerScriptService.Player.PlayerManager) -- Liste des classes de joueurs
 
-function CanSeeTarget.new()
+function CanSeeTarget.new(distance)
     local self = setmetatable({}, CanSeeTarget)
-    self.distanceMax = 40 -- distance maximale de détection
+    self.distanceMax = distance -- distance maximale de détection
     return self
 end
 

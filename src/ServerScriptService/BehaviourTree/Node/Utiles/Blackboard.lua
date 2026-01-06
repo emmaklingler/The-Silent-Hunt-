@@ -13,7 +13,6 @@ function Blackboard.new()
 
 	self.target = nil
 	self.state = "Idle"
-	self.isBusy = false
 
 	return self
 end
