@@ -24,7 +24,7 @@ function CanSeeTarget:Run(chasseur, blackboard)
 		if rabbitClass.Root then
             -- Calcul de la distance entre le chasseur et le lapin
 			local dist = (rabbitClass.Root.Position - chasseur.Root.Position).Magnitude
-			if dist < self.distanceMax and rabbitClass:IsAlive() then
+			if dist < self.distanceMax and rabbitClass:IsAlive() and not rabbitClass:DansCachette() then
                 -- Mise à jour de la cible dans le blackboard
 				blackboard.target = rabbitClass
 				return Status.SUCCESS

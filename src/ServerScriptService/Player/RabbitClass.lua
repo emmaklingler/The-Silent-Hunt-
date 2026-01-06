@@ -66,9 +66,20 @@ end
 ]]
 function Rabbit:SeCacher()
     self.EstCache = not self.EstCache
+    -- bloque ou débloque le mouvement (il faut aussi bloquer le saut)
+    if self.EstCache then
+        self.Humanoid.WalkSpeed = 0
+    else
+        self.Humanoid.WalkSpeed = 16
+    end
+    -- rend le caractère transparent ou non
+    self.Model["Plane.001"].Transparency = self.EstCache and 1 or 0
     print(self.Player.Name .. " est caché: " .. tostring(self.EstCache))
 end
 
+function Rabbit:DansCachette()
+    return self.EstCache
+end
 
 --[[
     Enleve de la vie au lapin.

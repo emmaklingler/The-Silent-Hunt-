@@ -10,11 +10,14 @@ local walkAnim = Instance.new("Animation")
 walkAnim.AnimationId = "rbxassetid://86588507256891" 
 local attackAnim = Instance.new("Animation") 
 attackAnim.AnimationId = "rbxassetid://94329896886564" 
+local shootAnim = Instance.new("Animation") 
+shootAnim.AnimationId = "rbxassetid://94329896886564" 
 
 
 local idleTrack = nil
 local walkTrack = nil
 local attackTrack = nil
+local shootTrack = nil
 
 
 ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state: string)
@@ -26,6 +29,7 @@ ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state:
         idleTrack = animator:LoadAnimation(idleAnim)
         walkTrack = animator:LoadAnimation(walkAnim)
         attackTrack = animator:LoadAnimation(attackAnim)
+        shootTrack = animator:LoadAnimation(shootAnim)
         idleTrack.Looped = true
     end
 
@@ -45,5 +49,11 @@ ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state:
         attackTrack:Play()
     else
         attackTrack:Stop()
+    end
+
+    if state == "AttackArme" then
+        shootTrack:Play()
+    else
+        shootTrack:Stop()
     end
 end)
