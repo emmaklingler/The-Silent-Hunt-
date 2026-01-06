@@ -4,14 +4,16 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local EatCarrotEvent = ReplicatedStorage.Remote:WaitForChild("EatCarrotEvent")
 local CreateCarrotEvent = ReplicatedStorage.Remote:WaitForChild("CreateCarrotEvent")
 
-local Carrot = script.Carrot
+local Carrot = game.ServerStorage.Asset:WaitForChild("Carrot")
 local CarrotSpawn = workspace:WaitForChild("CarrotSpawn")
 
+-- Table des positions de spawn des carottes dico : position => occupée (bool)
 local tablePos = {}
 for _, part in CarrotSpawn:GetChildren() do
     tablePos[part.Position] = false
 end
 
+-- Renvoie une position libre et la marque comme occupée
 local function getPosLibre()
     local libres = {}
 
@@ -30,13 +32,14 @@ local function getPosLibre()
     return choix
 end
 
-
+-- Variables
 local MaxCarrot = 2
 local time = 0
 local delay = 1
 local totaleCarrot = 0
 local id = 0
 
+-- Fonction de spawn d'une carotte
 local function spawnCarrot(position)
     local clone = Carrot:Clone()
     clone.Name = "Carrot"..id
@@ -50,6 +53,7 @@ local function spawnCarrot(position)
     CreateCarrotEvent:FireAllClients(clone.Name)
 end
 
+-- Événement de consommation d'une carotte
 EatCarrotEvent.OnServerEvent:Connect(function(player, carrot)
     tablePos[carrot.Position] = false
     totaleCarrot -= 1

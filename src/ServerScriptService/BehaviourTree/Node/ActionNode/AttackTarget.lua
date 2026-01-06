@@ -14,19 +14,20 @@ end
     @return Status.SUCCESS si l'attaque est effectuée, sinon Status.FAILURE
 ]]
 function AttackTarget:Run(chasseur, blackboard)
-    -- Si le chasseur est occupé, il ne peut pas attaquer
-    if blackboard.isBusy then return Status.FAILURE end
-    local target = blackboard.target
-    -- Vérification de la validité de la cible
-    if not target or not target.Root then return Status.FAILURE end
-    print("AttackTarget")
+	local target = blackboard.target
+	if not target then
+		return Status.FAILURE
+	end
 
+	local result = chasseur:TryAttack(target)
 
-	blackboard.isBusy = true
-	chasseur:Attack(target)
-    blackboard.isBusy = false
+	if result == "running" then
+		return Status.RUNNING
+	elseif result == "finished" then
+		return Status.SUCCESS
+	end
 
-    return Status.SUCCESS
+	return Status.FAILURE
 end
 
 return AttackTarget 

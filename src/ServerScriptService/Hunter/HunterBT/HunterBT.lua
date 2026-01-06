@@ -5,8 +5,11 @@ local Players = game:GetService("Players")
 -- importations des modules
 local Node = game.ServerScriptService:WaitForChild("BehaviourTree"):WaitForChild("Node")
 local Selector = require(Node.Utiles.Selector)
+local WeightedSelector = require(Node.Utiles.WeightedSelector)
 local Sequence = require(Node.Utiles.Sequence)
+
 local CanSeeTarget = require(Node.ConditionNode.CanSeeTarget)
+
 local FollowTarget = require(Node.ActionNode.FollowTarget)
 local Patrol = require(Node.ActionNode.Patrol)
 local AttackTarget = require(Node.ActionNode.AttackTarget)
