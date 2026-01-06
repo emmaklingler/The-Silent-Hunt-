@@ -11,7 +11,7 @@ walkAnim.AnimationId = "rbxassetid://86588507256891"
 local attackAnim = Instance.new("Animation") 
 attackAnim.AnimationId = "rbxassetid://94329896886564" 
 local shootAnim = Instance.new("Animation") 
-shootAnim.AnimationId = "rbxassetid://94329896886564" 
+shootAnim.AnimationId = "rbxassetid://98951013688597" 
 
 
 local idleTrack = nil
