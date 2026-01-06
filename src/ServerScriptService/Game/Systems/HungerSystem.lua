@@ -26,7 +26,9 @@ function HungerSysteme:Tick(dt)
     if time >= delay then
         time = 0
         for player, RabbitClass in listPlayer do
-            RabbitClass:RemoveSatiety(1)
+            if RabbitClass:IsAlive() then
+                RabbitClass:RemoveSatiety(1)
+            end
         end
     end  
 end

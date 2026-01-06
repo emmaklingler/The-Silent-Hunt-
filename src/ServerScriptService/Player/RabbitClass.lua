@@ -27,6 +27,14 @@ function Rabbit.new(player, profile)
 end
 
 --[[
+    Vérifie si le lapin est vivant
+    @return boolean - true si vivant, false sinon
+]]
+function Rabbit:IsAlive()
+    return self.Alive
+end
+
+--[[
     Enleve de la satiety au lapin. 
     Si la satiety est a 0, enleve de la vie.
     @param amount: nombre a enlever

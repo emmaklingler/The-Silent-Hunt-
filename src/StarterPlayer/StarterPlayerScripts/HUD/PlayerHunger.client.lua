@@ -2,12 +2,14 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local HungerEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("HungerChangeEvent")
+local LifeEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player.PlayerGui
 
 local satiety = 0
 local start = false
+local isAlive = true
 
 --[[
 	Met a jour la barre de faim en fonction de la satiety
@@ -23,6 +25,9 @@ end
 local function Start()
     while true do
         task.wait(1)
+		if not isAlive then
+			break
+		end
 		if satiety > 0 then
 			satiety-=1
 		end
@@ -39,5 +44,12 @@ HungerEvent.OnClientEvent:Connect(function(satietyValue)
 		-- Si pas encore démarré, lance la boucle de diminution de la faim
 		start = true
 		task.spawn(Start)
+	end
+end)
+
+LifeEvent.OnClientEvent:Connect(function(newLife)
+	if newLife <= 0 then
+		isAlive = false
+		start = false
 	end
 end)
