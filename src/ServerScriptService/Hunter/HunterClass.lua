@@ -2,6 +2,8 @@ local Hunter = {}
 Hunter.__index = Hunter
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
+local PathfindingService = game:GetService("PathfindingService")
+
 --[[
     Classe Hunter: gère le comportement et les actions d'un chasseur dans le jeu.
     @param model: Model - le modèle du chasseur dans le jeu
@@ -27,7 +29,7 @@ end
 
 --[[
     Déplace le chasseur vers une position cible
-    @param targetPosition: Vector3 - la position vers laquelle se déplacer
+    @param targetPosition: Vector3 - la position vers laquelle se déplacer en pathfinding
 ]]
 function Hunter:MoveTo(targetPosition)
     self:ChangeState("Walk")
