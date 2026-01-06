@@ -12,7 +12,7 @@ local CanSeeTarget = require(Node.ConditionNode.CanSeeTarget)
 
 local FollowTarget = require(Node.ActionNode.FollowTarget)
 local Patrol = require(Node.ActionNode.Patrol)
-local AttackTarget = require(Node.ActionNode.AttackTarget)
+local CloseAttack = require(Node.ActionNode.CloseAttack)
 
 local Blackboard = require(Node.Utiles.Blackboard)
 
@@ -24,7 +24,7 @@ local BT =  Selector.new({
     
     Sequence.new({
         CanSeeTarget.new(8),
-        AttackTarget.new()
+        CloseAttack.new()
     }),
     -- Arbre simple ici, si le chasseur peut voir une cible, il la suit et l'attaque, sinon il patrouille
     Sequence.new({

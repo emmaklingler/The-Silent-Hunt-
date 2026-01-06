@@ -1,8 +1,12 @@
 local RunService = game:GetService("RunService") 
 local Players = game:GetService("Players") 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer 
 local character = player.Character or player.CharacterAdded:Wait() 
+
+local isAlive = true
+local LifeChangeEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
 
 --///////////////////////////////////////////////////////////////////////////////////
 -- Init l'humanoid et l'animator
@@ -19,6 +23,8 @@ local jumpAnim = Instance.new("Animation")
 jumpAnim.AnimationId = "rbxassetid://72267736775767" 
 local runAnim = Instance.new("Animation") 
 runAnim.AnimationId = "rbxassetid://138414084300181" 
+local deadAnim = Instance.new("Animation")
+deadAnim.AnimationId = "rbxassetid://108026447487101"
 local idleTrack = animator:LoadAnimation(idleAnim) 
 local jumpTrack = animator:LoadAnimation(jumpAnim) 
 local runTrack = animator:LoadAnimation(runAnim)
@@ -29,7 +35,9 @@ runTrack.Looped = true
 
 -- Remets le bon humanoid si le joueur spawn à nouveau 
 player.CharacterAdded:Connect(function(char) 
-    character = char humanoid = character:WaitForChild("Humanoid") 
+    isAlive = true
+    character = char 
+    humanoid = character:WaitForChild("Humanoid") 
     animator = humanoid:WaitForChild("Animator") 
 
     humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false) 
@@ -40,6 +48,19 @@ player.CharacterAdded:Connect(function(char)
     idleTrack.Looped = false
     jumpTrack.Looped = false
     runTrack.Looped = true
+end)
+
+
+LifeChangeEvent.OnClientEvent:Connect(function(newLife)
+    if newLife <= 0 then
+        isAlive = false
+        humanoid.WalkSpeed = 0
+        idleTrack:Stop()
+        runTrack:Stop()
+        jumpTrack:Stop()
+        local deadTrack = animator:LoadAnimation(deadAnim)
+        deadTrack:Play()
+    end
 end)
 
 
@@ -96,6 +117,7 @@ end)
 
 -- Boucle principale
 RunService.RenderStepped:Connect(function(dt)
+    if not isAlive then return end
     jumpCooldown -= dt
      -- Gestion des états
     if state == "Idle" then

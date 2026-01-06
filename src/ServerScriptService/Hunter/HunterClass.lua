@@ -124,7 +124,7 @@ end
     Attaque d'une cible
     @param target: RabbitClass - la cible à attaquer
 ]]
-function Hunter:TryAttack(target)
+function Hunter:TryAttackClose(target)
 	if self.isAttacking then
 		if os.clock() >= self.attackEndTime then
 			self.isAttacking = false
