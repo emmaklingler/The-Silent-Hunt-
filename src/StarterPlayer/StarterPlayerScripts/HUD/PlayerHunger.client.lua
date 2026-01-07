@@ -40,6 +40,7 @@ end
 ]]
 HungerEvent.OnClientEvent:Connect(function(satietyValue)
 	satiety = satietyValue
+	UpdateBar()
 	if not start then
 		-- Si pas encore démarré, lance la boucle de diminution de la faim
 		start = true

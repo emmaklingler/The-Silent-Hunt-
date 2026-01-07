@@ -23,12 +23,12 @@ local blackboard = Blackboard.new()
 local BT =  Selector.new({
     
     Sequence.new({
-        CanSeeTarget.new(8),
+        CanSeeTarget.new(10),
         CloseAttack.new()
     }),
     -- Arbre simple ici, si le chasseur peut voir une cible, il la suit et l'attaque, sinon il patrouille
     Sequence.new({
-        CanSeeTarget.new(40),
+        CanSeeTarget.new(100),
         FollowTarget.new()
     }),
     Patrol.new()
