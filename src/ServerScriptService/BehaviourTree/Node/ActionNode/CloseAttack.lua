@@ -20,7 +20,6 @@ function AttackTarget:Run(chasseur, blackboard)
 	end
 
 	local result = chasseur:TryAttackClose(target)
-	print("TryAttackClose result:", result)
 	
 	return result
 end

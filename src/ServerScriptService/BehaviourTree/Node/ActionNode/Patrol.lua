@@ -15,7 +15,6 @@ end
 ]]
 function Patrol:Run(chasseur)
 	local result = chasseur:Patrol(50)
-    print("Patrol result:", result)
 	
     return result
 end

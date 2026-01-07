@@ -21,7 +21,6 @@ function FollowTarget:Run(chasseur, blackboard)
 	end
 	
 	local result = chasseur:Follow(target.Root.Position, 5)
-	print("FollowTarget result:", result)
 
 	return result
 end

@@ -35,8 +35,8 @@ function Hunter.new(model: Model)
 	self.rangedAttackDamage = 15
 
 	-- Timing tir
-	self.rangedCooldown = 1.2
-	self.rangedAttackDuration = 0.25
+	self.rangedCooldown = 2
+	self.rangedAttackDuration = 1
 
 	-- =============================
 	-- Munitions
