@@ -29,7 +29,14 @@ local blackboard = Blackboard.new()
 local BT = Selector.new({
 
  
-    --  RAVITAILLEMENT EN MUNITIONS
+ 
+   
+    --  ATTAQUE AU CORPS À CORPS
+    Sequence.new({
+        CanSeeTarget.new(8),
+        CloseAttack.new(),
+    }),
+       --  RAVITAILLEMENT EN MUNITIONS
     Sequence.new({
         NeedsMunitions.new(),
         GetMunitions.new(),
@@ -39,13 +46,6 @@ local BT = Selector.new({
     Sequence.new({
         NeedsReload.new(),
         ReloadWeapon.new(),
-    }),
-
-   
-    --  ATTAQUE AU CORPS À CORPS
-    Sequence.new({
-        CanSeeTarget.new(8),
-        CloseAttack.new(),
     }),
 
     --  ATTAQUE À DISTANCE
