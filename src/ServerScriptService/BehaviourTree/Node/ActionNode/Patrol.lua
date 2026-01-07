@@ -14,7 +14,7 @@ end
     @return Status.SUCCESS si la patrouille est effectuée, sinon Status.FAILURE
 ]]
 function Patrol:Run(chasseur)
-	local result = chasseur:Patrol(20)
+	local result = chasseur:Patrol(50)
     print("Patrol result:", result)
 	
     return result

@@ -1,5 +1,6 @@
 local Hunter = {}
 Hunter.__index = Hunter
+local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
 -- local PathfindingService = game:GetService("PathfindingService")
@@ -24,6 +25,7 @@ function Hunter.new(model: Model)
 	
     self.isAttacking = false
 
+<<<<<<< HEAD
 	--Paramètres d'attaque à distance 
 	self.rangedMinRange = 12
 	self.rangedMaxRange = 50
@@ -45,6 +47,12 @@ function Hunter.new(model: Model)
 	self.reloadEndTime = 0
 
     -- Animation
+=======
+	-- Pathfinding 
+	self.pathState = nil
+
+    -- Animation, ...
+>>>>>>> 0f205542ae3acde7299e54d7f49577686a8352d3
     self.state = ""
     self:ChangeState("Idle")  -- État initial du chasseur
 
@@ -63,11 +71,40 @@ end
 function Hunter:StopMove()
 	self.moveState = nil
 	self.patrolState = nil
+	self.pathState = nil
 	self.Humanoid:Move(Vector3.zero)
 	self:ChangeState("Idle")
 end
 
+--[[
+	Calcule un chemin vers une position cible
+	@param targetPosition: Vector3 - la position cible
+	@return table - liste de waypoints du chemin, ou nil si le chemin ne peut pas être calculé
+]]
+function Hunter:ComputePath(targetPosition)
+    local path = PathfindingService:CreatePath({
+        AgentRadius = 6,
+        AgentHeight = 20,
+        AgentCanJump = false,
+		WaypointSpacing = 6,
+		Costs = {
+			Danger = math.huge,
+		}
+    })
 
+    path:ComputeAsync(self.Root.Position, targetPosition)
+
+    if path.Status ~= Enum.PathStatus.Success then
+        return nil
+    end
+
+    return path:GetWaypoints()
+end
+
+--Pour DEBUG
+local folder = Instance.new("Folder")
+folder.Name = "DebugPath"
+folder.Parent = workspace
 --[[
     Déplace le chasseur vers une position cible
     @param targetPosition: Vector3 - la position vers laquelle se déplacer en pathfinding
@@ -75,45 +112,75 @@ end
 function Hunter:Follow(position, timeout)
 	timeout = timeout or 5
 
-	-- target invalide → stop
+	-- target invalide -> stop
 	if not position then
 		self:StopMove()
 		return Status.FAILURE
 	end
 
 	-- start move si nécessaire
-	if not self.moveState then
-		self.moveState = {
-			target = position,
-			startTime = os.clock(),
-			timeout = timeout
-		}
+	if not self.pathState then
+        local waypoints = self:ComputePath(position)
+        if not waypoints or #waypoints == 0 then
+            return Status.FAILURE
+        end
+		--Pour DEBUG
+		folder:ClearAllChildren()
+		for _, waypoint in pairs(waypoints) do
+			local part = Instance.new("Part")
+			part.Size = Vector3.new(1,1,1)
+			part.Parent = folder
+			part.Position = waypoint.Position + Vector3.new(0,2,0)
+			part.Anchored = true	
+			part.CanCollide = false
+			part.BrickColor = BrickColor.new("Bright yellow")
+		end
 
-		self:ChangeState("Walk")
-		self.Humanoid:MoveTo(position)
-		return Status.RUNNING
-	end
+        self.pathState = {
+            waypoints = waypoints,
+            index = 1,
+            target = position,
+            startTime = os.clock(),
+            timeout = timeout
+        }
 
-	-- réajuster si la cible a bougé
-	if (self.moveState.target - position).Magnitude > 2 then
-		self.moveState.target = position
-		self.Humanoid:MoveTo(position)
-	end
+        self:ChangeState("Walk")
+        self.Humanoid:MoveTo(waypoints[1].Position)
+        return Status.RUNNING
+    end
 
-	-- timeout
-	if os.clock() - self.moveState.startTime > self.moveState.timeout then
-		self:StopMove()
-		return Status.FAILURE
-	end
 
-	-- arrivé
-	if (self.Root.Position - self.moveState.target).Magnitude < 4 then
-		self:StopMove()
-		return Status.SUCCESS
-	end
+	-- TARGET A BOUGÉ -> RECALCUL
+    if (self.pathState.target - position).Magnitude > 5 then
+        self:StopMove()
+        return Status.RUNNING
+    end
+
+	-- TIMEOUT
+    if os.clock() - self.pathState.startTime > self.pathState.timeout then
+        self:StopMove()
+        return Status.FAILURE
+    end
+
+	local waypoint = self.pathState.waypoints[self.pathState.index]
+
+    -- ATTEINT LE WAYPOINT
+    if (self.Root.Position - waypoint.Position).Magnitude < 3 then
+        self.pathState.index += 1
+
+        -- FIN DU CHEMIN
+        if self.pathState.index > #self.pathState.waypoints then
+            self:StopMove()
+            return Status.SUCCESS
+        end
+
+        local nextWaypoint = self.pathState.waypoints[self.pathState.index]
+        self.Humanoid:MoveTo(nextWaypoint.Position)
+    end
 
 	return Status.RUNNING
 end
+
 
 
 --[[
@@ -121,33 +188,65 @@ end
     @param targetPosition: Vector3 - la position vers laquelle se déplacer
 ]]
 function Hunter:Patrol(radius)
-	-- Si pas de state ou on est arrivé, générer nouvelle destination
-	if not self.patrolState or (self.Root.Position - self.patrolState.target).Magnitude < 4 then
-		self:StopMove()
+	radius = radius or 40
 
-		local offset = Vector3.new(
-			math.random(-radius, radius),
-			0,
-			math.random(-radius, radius)
-		)
-
+	-- init patrol
+	if not self.patrolState then
 		self.patrolState = {
-			target = self.Root.Position + offset
+			mode = "Waiting",
+			radius = radius,
+			waitEndTime = os.clock() + math.random(0, 1)
 		}
-
-		self:ChangeState("Walk")
-		self.Humanoid:MoveTo(self.patrolState.target)
+		self:ChangeState("Idle")
 		return Status.RUNNING
 	end
 
-	-- Si on est encore en route
-	if self.patrolState then
-		self.Humanoid:MoveTo(self.patrolState.target)
+	---------------------------------------------------
+	-- MODE : WAITING (regarde autour de lui)
+	---------------------------------------------------
+	if self.patrolState.mode == "Waiting" then
+		-- temps d'attente terminé → nouvelle destination
+		if os.clock() >= self.patrolState.waitEndTime then
+			local offset = Vector3.new(
+				math.random(-radius, radius),
+				0,
+				math.random(-radius, radius)
+			)
+
+			self.patrolState.target = self.Root.Position + offset
+			self.patrolState.mode = "Moving"
+
+			self:ChangeState("Walk")
+		else
+			-- rester idle
+			self:ChangeState("Idle")
+		end
+
 		return Status.RUNNING
 	end
 
-	return Status.SUCCESS
+	---------------------------------------------------
+	-- MODE : MOVING (pathfinding)
+	---------------------------------------------------
+	if self.patrolState.mode == "Moving" then
+		local status = self:Follow(self.patrolState.target, 10)
+
+		-- arrivé ou échec → pause
+		if status == Status.SUCCESS or status == Status.FAILURE then
+			self.patrolState = {
+				mode = "Waiting",
+				radius = radius,
+				waitEndTime = os.clock() + math.random(2, 5)
+			}
+			self:ChangeState("Idle")
+		end
+
+		return Status.RUNNING
+	end
+
+	return Status.RUNNING
 end
+
 
 --[[
     Attaque d'une cible
