@@ -50,7 +50,7 @@ function Hunter.new(model: Model)
 	-- =============================
 	-- Reload
 	-- =============================
-	self.reloadDuration = 1.4
+	self.reloadDuration = 3
 	self.isReloading = false
 	self.reloadEndTime = 0
 
@@ -350,6 +350,7 @@ function Hunter:TryReloadWeapon()
 	end
 
 	-- Start reload
+	
 	self.isReloading = true
 	self.reloadEndTime = os.clock() + self.reloadDuration
 
@@ -379,7 +380,12 @@ function Hunter:TryRangedAttack(target)
 	if self.isRangedAttacking then
 		if os.clock() >= self.attackEndTime then
 			self.isRangedAttacking = false
+
+			-- reset flag
+			self.rangedDidShoot = false
+
 			self:ChangeState("Idle")
+			print("[ATTACK] Fin du tir")
 			return Status.SUCCESS
 		end
 		return Status.RUNNING
@@ -416,20 +422,25 @@ function Hunter:TryRangedAttack(target)
 	if not result or not result.Instance:IsDescendantOf(target.Model) then
 		return Status.FAILURE
 	end
-
 	-- start attack
 	self:StopMove()
 
 	self.isRangedAttacking = true
+	self.rangedDidShoot = true --  marque que ce cycle a bien tiré
 	self.attackEndTime = os.clock() + self.rangedAttackDuration
 	self.nextRangedTime = os.clock() + self.rangedCooldown
 
 	self.ammoInMag -= 1
 
+	print(string.format("[SHOT] Tir | mag=%d/%d | reserve=%d",
+		self.ammoInMag, self.magSize, self.ammoReserve
+	))
+
 	self:ChangeState("AttackArme")
 	target:RemoveHealth(self.rangedAttackDamage)
 
 	return Status.RUNNING
+
 end
 
 
