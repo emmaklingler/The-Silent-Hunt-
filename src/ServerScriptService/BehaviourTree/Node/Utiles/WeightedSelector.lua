@@ -13,7 +13,7 @@ end
 function WeightedSelector:PickChild(blackboard)
 	local totalWeight = 0
 
-	for _, child in ipairs(self.children) do
+	for _, child in self.children do
 		local w = type(child.weight) == "function"
 			and child.weight(blackboard)
 			or child.weight
@@ -23,12 +23,14 @@ function WeightedSelector:PickChild(blackboard)
 	local rnd = math.random() * totalWeight
 	local acc = 0
 
-	for _, child in ipairs(self.children) do
+	for _, child in self.children do
 		local w = type(child.weight) == "function"
 			and child.weight(blackboard)
 			or child.weight
 		acc += w
 		if rnd <= acc then
+			
+			print("WeightedSelector picked child:", child.nom)
 			return child.node
 		end
 	end

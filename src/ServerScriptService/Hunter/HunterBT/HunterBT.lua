@@ -62,7 +62,7 @@ local BT = Selector.new({
 
     --  PATROUILLE
     Patrol.new(),
-})
+}) 
 
 
 --[[
