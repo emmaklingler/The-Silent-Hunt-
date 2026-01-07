@@ -7,6 +7,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 
 local isAlive = true
 local LifeChangeEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
+local PlaySoundEvent = ReplicatedStorage.Remote:WaitForChild("PlaySound")
 
 --///////////////////////////////////////////////////////////////////////////////////
 -- Init l'humanoid et l'animator
@@ -83,6 +84,8 @@ local function Jump()
     if not IsGrounded() then return end
     if state == "Jumping" then return end
     state = "Jumping"
+    
+    PlaySoundEvent:FireServer(character.HumanoidRootPart.Position, "JumpGrass", 1)
 
     local hrp = character.HumanoidRootPart
     local dir = hrp.CFrame.LookVector
