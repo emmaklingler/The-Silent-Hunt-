@@ -1,9 +1,11 @@
 local Hunter = {}
 Hunter.__index = Hunter
+
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local PathfindingService = game:GetService("PathfindingService")
 local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
--- local PathfindingService = game:GetService("PathfindingService")
+
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
 
 --[[
@@ -11,58 +13,70 @@ local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status
     @param model: Model - le modèle du chasseur dans le jeu
 ]]
 function Hunter.new(model: Model)
-    local self = setmetatable({}, Hunter)
-    self.Model = model
-    self.Humanoid = model:WaitForChild("Humanoid")
+	local self = setmetatable({}, Hunter)
+
+	self.Model = model
+	self.Humanoid = model:WaitForChild("Humanoid")
 	self.Root = model:WaitForChild("HumanoidRootPart")
 
-    -- Paramètres d'attaque
-    self.closeAttackRange = 10
-    self.closeAttackDamage = 20
-    self.attackCooldown = 3
-    self.attackDuration = 1.5
-	
-	
-    self.isAttacking = false
+	-- =============================
+	-- Paramètres d'attaque close
+	-- =============================
+	self.closeAttackRange = 10
+	self.closeAttackDamage = 20
+	self.attackCooldown = 3
+	self.attackDuration = 1.5
 
-<<<<<<< HEAD
-	--Paramètres d'attaque à distance 
+	-- =============================
+	-- Paramètres d'attaque à distance
+	-- =============================
 	self.rangedMinRange = 12
 	self.rangedMaxRange = 50
 	self.rangedAttackDamage = 15
 
 	-- Timing tir
 	self.rangedCooldown = 1.2
-	self.rangedAttackDuration = 0.25 -- temps "tir" (animation/lock) simulé
+	self.rangedAttackDuration = 0.25
 
-	-- Munitions 
+	-- =============================
+	-- Munitions
+	-- =============================
 	self.magSize = 2
 	self.ammoInMag = self.magSize
-	self.maxAmmoReserve = 0
-	self.ammoReserve = self.maxAmmoReserve 
 
-	-- Reload 
+	self.maxAmmoReserve = 0
+	self.ammoReserve = self.maxAmmoReserve
+
+	-- =============================
+	-- Reload
+	-- =============================
 	self.reloadDuration = 1.4
 	self.isReloading = false
 	self.reloadEndTime = 0
 
-    -- Animation
-=======
-	-- Pathfinding 
+	-- =============================
+	-- Pathfinding state
+	-- =============================
 	self.pathState = nil
+	self.patrolState = nil
+	self.moveState = nil
 
-    -- Animation, ...
->>>>>>> 0f205542ae3acde7299e54d7f49577686a8352d3
-    self.state = ""
-    self:ChangeState("Idle")  -- État initial du chasseur
+	-- =============================
+	-- Animation / state
+	-- =============================
+	self.state = ""
+	self:ChangeState("Idle")
 
-		
-	-- État attaque (tu peux garder un seul flag pour l’instant)
+	-- =============================
+	-- États d'attaque / timers
+	-- =============================
 	self.isAttacking = false
 	self.attackEndTime = 0
-	self.nextRangedTime = 0
 
-    return self
+	self.nextAttackTime = 0      -- close
+	self.nextRangedTime = 0      -- ranged
+
+	return self
 end
 
 --[[
@@ -391,7 +405,7 @@ function Hunter:TryRangedAttack(target)
 		return self:TryReloadWeapon()
 	end
 
-	-- 🔴 STOP AVANT TIR
+	-- STOP AVANT TIR
 	self:StopMove()
 
 	-- Start tir

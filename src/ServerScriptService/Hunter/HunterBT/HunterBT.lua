@@ -20,23 +20,7 @@ local ReloadWeapon = require(Node.ActionNode.ReloadWeapon)
 local Blackboard = require(Node.Utiles.Blackboard)
 local blackboard = Blackboard.new()
 
-<<<<<<< HEAD
 local BT = WeightedSelector.new({
-=======
--- Définition de l'arbre de comportement du chasseur
-local BT =  Selector.new({
-    
-    Sequence.new({
-        CanSeeTarget.new(10),
-        CloseAttack.new()
-    }),
-    -- Arbre simple ici, si le chasseur peut voir une cible, il la suit et l'attaque, sinon il patrouille
-    Sequence.new({
-        CanSeeTarget.new(100),
-        FollowTarget.new()
-    }),
-    Patrol.new()
->>>>>>> 0f205542ae3acde7299e54d7f49577686a8352d3
 
 	{
 		key = "REFILL",
