@@ -47,9 +47,15 @@ function DetectionVision:Run(chasseur, blackboard)
 
 					-- 4) Si on touche le lapin → il est visible
 					if result and result.Instance:IsDescendantOf(rabbit.Model) then
-						blackboard.target = rabbit
-						return Status.SUCCESS
-					end
+                        if blackboard._debugLastTarget ~= rabbit then
+                            blackboard._debugLastTarget = rabbit
+                            print("[VISION] Nouvelle cible détectée :", rabbit.Model.Name)
+                        end
+
+                        blackboard.target = rabbit
+                        return Status.SUCCESS
+                    end
+
 				end
 			end
 		end

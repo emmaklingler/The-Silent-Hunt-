@@ -370,12 +370,12 @@ function Hunter:TryRangedAttack(target)
 		return Status.FAILURE
 	end
 
-	-- si on est en reload, on ne tire pas
+	-- pas de tir pendant reload
 	if self.isReloading then
 		return Status.FAILURE
 	end
 
-	-- si tir en cours (animation/lock)
+	-- tir déjà en cours
 	if self.isRangedAttacking then
 		if os.clock() >= self.attackEndTime then
 			self.isRangedAttacking = false
@@ -386,7 +386,11 @@ function Hunter:TryRangedAttack(target)
 	end
 
 	-- distance
-	local dist = (self.Root.Position - target.Root.Position).Magnitude
+	local origin = self.Root.Position
+	local targetPos = target.Root.Position
+	local toTarget = targetPos - origin
+	local dist = toTarget.Magnitude
+
 	if dist < self.rangedMinRange or dist > self.rangedMaxRange then
 		return Status.FAILURE
 	end
@@ -396,15 +400,26 @@ function Hunter:TryRangedAttack(target)
 		return Status.FAILURE
 	end
 
-	-- pas de balle => on FAIL (le BT fera RELOAD ou REFILL)
+	-- plus de balles → on FAIL, le BT décidera RELOAD / REFILL
 	if (self.ammoInMag or 0) <= 0 then
 		return Status.FAILURE
 	end
 
-	-- stop move avant tir
+	-- Raycast : vérifie la ligne de vue
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { self.Model }
+
+	local result = workspace:Raycast(origin, toTarget, params)
+
+	-- Si on touche quelque chose ET que ce n'est PAS le lapin → bloqué
+	if not result or not result.Instance:IsDescendantOf(target.Model) then
+		return Status.FAILURE
+	end
+
+	-- start attack
 	self:StopMove()
 
-	-- start tir
 	self.isRangedAttacking = true
 	self.attackEndTime = os.clock() + self.rangedAttackDuration
 	self.nextRangedTime = os.clock() + self.rangedCooldown
