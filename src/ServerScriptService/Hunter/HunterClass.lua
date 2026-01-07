@@ -71,6 +71,7 @@ function Hunter.new(model: Model)
 	-- États d'attaque / timers
 	-- =============================
 	self.isAttacking = false
+	self.isRangedAttacking = false
 	self.attackEndTime = 0
 
 	self.nextAttackTime = 0      -- close
@@ -311,9 +312,6 @@ function Hunter:ChangeState(state)
 end
 
 
-
-
-
 --[[
     Recharge l'arme
     @return Status.SUCCESS si reload terminé,
@@ -372,61 +370,53 @@ function Hunter:TryRangedAttack(target)
 		return Status.FAILURE
 	end
 
-	-- Si reload en cours, on laisse finir (priorité)
+	-- si on est en reload, on ne tire pas
 	if self.isReloading then
-		return self:TryReloadWeapon()
+		return Status.FAILURE
 	end
 
-	-- Si tir en cours
-	if self.isAttacking then
+	-- si tir en cours (animation/lock)
+	if self.isRangedAttacking then
 		if os.clock() >= self.attackEndTime then
-			self.isAttacking = false
+			self.isRangedAttacking = false
 			self:ChangeState("Idle")
-			print("[RANGED] Fin tir")
 			return Status.SUCCESS
 		end
 		return Status.RUNNING
 	end
 
-	-- Distance valide
+	-- distance
 	local dist = (self.Root.Position - target.Root.Position).Magnitude
 	if dist < self.rangedMinRange or dist > self.rangedMaxRange then
 		return Status.FAILURE
 	end
 
-	-- Cooldown
+	-- cooldown
 	if os.clock() < (self.nextRangedTime or 0) then
 		return Status.FAILURE
 	end
 
-	-- Chargeur vide -> reload
-	if self:NeedsReload() then
-		print("[RANGED] Chargeur vide -> reload")
-		return self:TryReloadWeapon()
+	-- pas de balle => on FAIL (le BT fera RELOAD ou REFILL)
+	if (self.ammoInMag or 0) <= 0 then
+		return Status.FAILURE
 	end
 
-	-- STOP AVANT TIR
+	-- stop move avant tir
 	self:StopMove()
 
-	-- Start tir
-	self.isAttacking = true
+	-- start tir
+	self.isRangedAttacking = true
 	self.attackEndTime = os.clock() + self.rangedAttackDuration
 	self.nextRangedTime = os.clock() + self.rangedCooldown
 
-	-- Consomme 1 munition
 	self.ammoInMag -= 1
 
 	self:ChangeState("AttackArme")
-	print(string.format(
-		"[RANGED] Tir simulé | dist=%.1f | chargeur=%d/%d | réserve=%d",
-		dist,
-		self.ammoInMag, self.magSize, self.ammoReserve
-	))
-
 	target:RemoveHealth(self.rangedAttackDamage)
 
 	return Status.RUNNING
 end
+
 
 --===========================================================
 -- Méthodes spécifiques au ravitaillement en munitions
