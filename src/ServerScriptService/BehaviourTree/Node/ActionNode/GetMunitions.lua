@@ -3,67 +3,38 @@ GetMunitions.__index = GetMunitions
 
 local Status = require(script.Parent.Parent.Utiles.Status)
 
--- Distance à laquelle on considère être "arrivé" à la cabane
-local ARRIVAL_DISTANCE = 4 -- studs
-
 function GetMunitions.new()
-	local self = setmetatable({}, GetMunitions)
-	return self
+	return setmetatable({}, GetMunitions)
 end
 
 --[[
-    Noeud GetMunitions: va récupérer des munitions à un point dédié
-    @param chasseur: classe du chasseur
-    @param blackboard: table de données partagées
-    @return Status.SUCCESS si les munitions sont récupérées,
-            Status.RUNNING si le déplacement ou la récupération est en cours,
-            Status.FAILURE si les munitions ne peuvent pas être récupérées
+	Noeud GetMunitions: fait aller le chasseur chercher des munitions à sa hutte
+	@param hunter: classe du chasseur
+	@param blackboard: table de données partagées
+	@return Status.SUCCESS si le chasseur a récupéré des munitions,
+			Status.RUNNING s'il est en chemin,
+			Status.FAILURE si le chasseur n'a pas besoin de munitions ou ne peut pas y aller
 ]]
-
-function GetMunitions:Run(chasseur, blackboard)
-
-	-- Si le chasseur n’a pas besoin de munitions, on échoue volontairement
-	if not chasseur:NeedsMunitions() then
+			
+function GetMunitions:Run(hunter, blackboard)
+	if not hunter.NeedsMunitions or not hunter:NeedsMunitions() then
+		blackboard.getMunitions = nil
 		return Status.FAILURE
 	end
 
-	-- Position de la cabane (point fixe connu du chasseur)
-	local hutPosition = chasseur:GetHutPosition()
-	if not hutPosition then
-		return Status.FAILURE
-	end
+	local pos = hunter.GetHutPosition and hunter:GetHutPosition()
+	if not pos then return Status.FAILURE end
 
-	-- Initialisation de l’état interne
-	blackboard.getMunitions = blackboard.getMunitions or {
-		moving = false
-	}
-
-	local state = blackboard.getMunitions
-	local hunterPos = chasseur.Root and chasseur.Root.Position
-	if not hunterPos then
-		return Status.FAILURE
-	end
-
-	local dist = (hutPosition - hunterPos).Magnitude
-
-	-- Si on n’est pas encore arrivé
-	if dist > ARRIVAL_DISTANCE then
-		if not state.moving then
-			-- Lancement du déplacement une seule fois
-			state.moving = true
-			chasseur:MoveTo(hutPosition)
+	-- On avance vers le point
+	local move = hunter.Follow and hunter:Follow(pos, 12) or Status.FAILURE
+	if move == Status.SUCCESS then
+		if hunter.RefillMunitions then
+			return hunter:RefillMunitions() and Status.SUCCESS or Status.FAILURE
 		end
-		return Status.RUNNING
+		return Status.SUCCESS
 	end
 
-	-- Arrivé à la cabane → récupération des munitions
-	chasseur:RefillMunitions()
-
-	-- Cleanup
-	state.moving = false
-	blackboard.getMunitions = nil
-
-	return Status.SUCCESS
+	return move -- RUNNING ou FAILURE
 end
 
 return GetMunitions
