@@ -14,6 +14,10 @@ local FollowTarget = require(Node.ActionNode.FollowTarget)
 local Patrol = require(Node.ActionNode.Patrol)
 local CloseAttack = require(Node.ActionNode.CloseAttack)
 local RangedAttack = require(Node.ActionNode.RangedAttack)
+local NeedsReload = require(Node.ConditionNode.NeedsReload)
+local ReloadWeapon = require(Node.ActionNode.ReloadWeapon)
+local NeedsMunitions = require(Node.ConditionNode.NeedsMunitions)
+local GetMunitions = require(Node.ActionNode.GetMunitions)
 
 
 local Blackboard = require(Node.Utiles.Blackboard)
@@ -22,24 +26,44 @@ local Blackboard = require(Node.Utiles.Blackboard)
 local blackboard = Blackboard.new()
 
 -- Définition de l'arbre de comportement du chasseur
-local BT =  Selector.new({
-    
+local BT = Selector.new({
+
+ 
+    --  RAVITAILLEMENT EN MUNITIONS
+    Sequence.new({
+        NeedsMunitions.new(),
+        GetMunitions.new(),
+    }),
+
+    --  RECHARGER L'ARME
+    Sequence.new({
+        NeedsReload.new(),
+        ReloadWeapon.new(),
+    }),
+
+   
+    --  ATTAQUE AU CORPS À CORPS
     Sequence.new({
         CanSeeTarget.new(8),
-        CloseAttack.new()
+        CloseAttack.new(),
     }),
+
+    --  ATTAQUE À DISTANCE
     Sequence.new({
         CanSeeTarget.new(50),
-        RangedAttack.new()
+        RangedAttack.new(),
     }),
 
+    --  SUIVRE LA CIBLE
     Sequence.new({
         CanSeeTarget.new(100),
-        FollowTarget.new()
+        FollowTarget.new(),
     }),
-    Patrol.new()
 
+    --  PATROUILLE
+    Patrol.new(),
 })
+
 
 --[[
     Initialise et démarre l'arbre de comportement du chasseur

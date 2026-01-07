@@ -15,18 +15,18 @@ end
 			Status.RUNNING s'il est en chemin,
 			Status.FAILURE si le chasseur n'a pas besoin de munitions ou ne peut pas y aller
 ]]
-			
+
 function GetMunitions:Run(hunter, blackboard)
 	if not hunter.NeedsMunitions or not hunter:NeedsMunitions() then
 		blackboard.getMunitions = nil
 		return Status.FAILURE
 	end
-
-	local pos = hunter.GetHutPosition and hunter:GetHutPosition()
+	local part = hunter.GetHutPart and hunter:GetHutPart()
+	local pos = part and part.Position
 	if not pos then return Status.FAILURE end
 
 	-- On avance vers le point
-	local move = hunter.Follow and hunter:Follow(pos, 12) or Status.FAILURE
+	local move = hunter.Follow and hunter:Follow(pos, 100000000) or Status.FAILURE
 	if move == Status.SUCCESS then
 		if hunter.RefillMunitions then
 			return hunter:RefillMunitions() and Status.SUCCESS or Status.FAILURE

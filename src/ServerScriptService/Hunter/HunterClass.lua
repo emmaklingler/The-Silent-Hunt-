@@ -44,7 +44,7 @@ function Hunter.new(model: Model)
 	self.magSize = 2
 	self.ammoInMag = self.magSize
 
-	self.maxAmmoReserve = 0
+	self.maxAmmoReserve = 2
 	self.ammoReserve = self.maxAmmoReserve
 
 	-- =============================
