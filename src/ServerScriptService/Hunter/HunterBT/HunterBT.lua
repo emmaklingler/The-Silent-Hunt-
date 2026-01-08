@@ -20,6 +20,7 @@ local NeedsMunitions = require(Node.ConditionNode.NeedsMunitions)
 local GetMunitions = require(Node.ActionNode.GetMunitions)
 local DetectionAround = require(Node.ConditionNode.DetectionAround)
 local DetectionVision = require(Node.ConditionNode.DetectionVision)
+local MakeTrap = require(Node.ActionNode.MakeTrap)
 
 
 
@@ -33,7 +34,7 @@ local BT = Selector.new({
 
  
  
-   
+
     --  ATTAQUE AU CORPS À CORPS
     Sequence.new({
         DetectionAround.new(8),
@@ -51,6 +52,12 @@ local BT = Selector.new({
     Sequence.new({
         DetectionVision.new(50),
         RangedAttack.new(),
+    }),
+
+    --  POSER UN PIÈGE
+    Sequence.new({
+        DetectionVision.new(50),
+        MakeTrap.new(),
     }),
 
     --  SUIVRE LA CIBLE

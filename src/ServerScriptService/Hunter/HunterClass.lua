@@ -5,6 +5,7 @@ local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PathfindingService = game:GetService("PathfindingService")
 local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
 
@@ -76,6 +77,16 @@ function Hunter.new(model: Model)
 
 	self.nextAttackTime = 0      -- close
 	self.nextRangedTime = 0      -- ranged
+
+	-- =============================
+	-- Pèges
+	-- =============================
+	-- self.ActiveTraps = {}
+	-- self.maxActiveTraps = 4
+	self.trapsStockMax = 5
+	self.trapsStock = self.trapsStockMax
+
+
 
 	return self
 end
@@ -513,6 +524,57 @@ function Hunter:RefillMunitions()
 
 	return true
 end
+
+--===========================================================
+-- Méthodes spécifiques à la creation de piège 
+--===========================================================
+local Trap = require(script.Parent.Objets.Trap)
+
+function Hunter:TryPlaceTrap()
+	if not self.Root then
+		return false
+	end
+
+	self._nextTrapTime = self._nextTrapTime or 0
+	if os.clock() < self._nextTrapTime then
+		return false
+	end
+	self._nextTrapTime = os.clock() + 2 -- cooldown entre chaque piège
+
+	-- Asset dans ServerStorage/Asset/Trap (comme tu l’as montré)
+	local assetsFolder = ServerStorage:FindFirstChild("Asset")
+	if not assetsFolder then
+		warn("Asset folder not found in ServerStorage")
+		return false
+	end
+
+	local trapTemplate = assetsFolder:FindFirstChild("Trap")
+	if not trapTemplate then
+		warn("Trap asset not found in ServerStorage/Asset")
+		return false
+	end
+
+	-- Position: aux pieds du chasseur (simple)
+	local position = self.Root.Position - Vector3.new(0, self.Root.Size.Y * 0.5, 0)
+	
+	if (self.trapsStock or 0) <= 0 then
+		return false
+	end
+
+	local trap = Trap.new(self, position)
+	trap:Spawn(trapTemplate)
+
+	self.trapsStock -= 1
+	print(string.format("[TRAP] posé | stock=%d/%d", self.trapsStock, self.trapsStockMax))
+
+
+	self.ActiveTraps = self.ActiveTraps or {}
+	table.insert(self.ActiveTraps, trap)
+	print("[TRAP] Piège posé à", position)
+	return true
+end
+
+
 
 
 
