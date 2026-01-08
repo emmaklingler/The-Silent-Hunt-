@@ -16,21 +16,22 @@ function HungerSysteme:Init(players)
 end
 
 
-local time = 0
-local delay = 1
+local rate = 1 -- taux de faim par seconde
+local last = os.clock()
 --[[
     Toutes les secondes enlèvent de la faim à tous les joueur
 ]]
 function HungerSysteme:Tick(dt)
-    time += dt
-    if time >= delay then
-        time = 0
-        for player, RabbitClass in listPlayer do
-            if RabbitClass:IsAlive() then
-                RabbitClass:RemoveSatiety(1)
-            end
+    local now = os.clock()
+    local newdt = now - last
+    last = now
+
+    local satietyToRemove = rate * newdt
+    for player, RabbitClass in listPlayer do
+        if RabbitClass:IsAlive() then
+            RabbitClass:RemoveSatiety(satietyToRemove)
         end
-    end  
+    end
 end
 
 

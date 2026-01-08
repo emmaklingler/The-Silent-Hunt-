@@ -29,7 +29,7 @@ function DetectionVision:Run(chasseur, blackboard)
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = { chasseur.Model }
 
-	for _, rabbit in pairs(PlayerManager:GetAllRabbits()) do
+	for _, rabbit in PlayerManager:GetAllRabbits() do
 		if rabbit.Root and rabbit:IsAlive() and not rabbit:DansCachette() then
 			local toTarget = rabbit.Root.Position - origin
 			local dist = toTarget.Magnitude
@@ -47,11 +47,6 @@ function DetectionVision:Run(chasseur, blackboard)
 
 					-- 4) Si on touche le lapin → il est visible
 					if result and result.Instance:IsDescendantOf(rabbit.Model) then
-                        if blackboard._debugLastTarget ~= rabbit then
-                            blackboard._debugLastTarget = rabbit
-                            print("[VISION] Nouvelle cible détectée :", rabbit.Model.Name)
-                        end
-
                         blackboard.target = rabbit
                         return Status.SUCCESS
                     end
