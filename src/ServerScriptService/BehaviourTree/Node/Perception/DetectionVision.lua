@@ -18,7 +18,6 @@ end
     @return Status.SUCCESS si une cible est trouvée, sinon Status.FAILURE
 ]]
 function DetectionVision:Run(chasseur, blackboard)
-	if blackboard.isBusy then return Status.FAILURE end
 	if not chasseur.Root then return Status.FAILURE end
 
 	local origin = chasseur.Root.Position
@@ -47,7 +46,7 @@ function DetectionVision:Run(chasseur, blackboard)
 
 					-- 4) Si on touche le lapin → il est visible
 					if result and result.Instance:IsDescendantOf(rabbit.Model) then
-                        blackboard.target = rabbit
+                        blackboard:SetSeenTarget(rabbit)
                         return Status.SUCCESS
                     end
 
@@ -55,7 +54,7 @@ function DetectionVision:Run(chasseur, blackboard)
 			end
 		end
 	end
-
+	blackboard:UnsetSeenTarget()
 	return Status.FAILURE
 end
 

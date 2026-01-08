@@ -14,12 +14,18 @@ local FollowTarget = require(Node.ActionNode.FollowTarget)
 local Patrol = require(Node.ActionNode.Patrol)
 local CloseAttack = require(Node.ActionNode.CloseAttack)
 local RangedAttack = require(Node.ActionNode.RangedAttack)
-local NeedsReload = require(Node.ConditionNode.NeedsReload)
 local ReloadWeapon = require(Node.ActionNode.ReloadWeapon)
-local NeedsMunitions = require(Node.ConditionNode.NeedsMunitions)
 local GetMunitions = require(Node.ActionNode.GetMunitions)
-local DetectionAround = require(Node.ConditionNode.DetectionAround)
-local DetectionVision = require(Node.ConditionNode.DetectionVision)
+
+
+local NeedsReload = require(Node.ConditionNode.NeedsReload)
+local NeedsMunitions = require(Node.ConditionNode.NeedsMunitions)
+local InRange = require(Node.ConditionNode.InRange)
+local HasTarget = require(Node.ConditionNode.HasTarget)
+local HasLastSeenPosition = require(Node.ConditionNode.HasLastSeenPosition)
+
+
+local DetectionVision = require(Node.Perception.DetectionVision)
 
 
 
@@ -31,44 +37,61 @@ local blackboard = Blackboard.new()
 -- Définition de l'arbre de comportement du chasseur
 local BT = Selector.new({
 
- 
- 
-   
-    --  ATTAQUE AU CORPS À CORPS
-    Sequence.new({
-        DetectionAround.new(8),
-        CloseAttack.new(),
-    }),
-    
+	-- =========================
+	-- COMBAT (prioritaire)
+	-- =========================
+	Sequence.new({
+		HasTarget.new(), -- condition basée sur le blackboard
+		
+		Selector.new({
 
-    --  RECHARGER L'ARME
-    Sequence.new({
-        NeedsReload.new(),
-        ReloadWeapon.new(),
-    }),
+			-- close combat
+			Sequence.new({
+				InRange.new(0, 8),
+				CloseAttack.new(),
+			}),
 
-    --  ATTAQUE À DISTANCE
-    Sequence.new({
-        DetectionVision.new(50),
-        RangedAttack.new(),
-    }),
+			-- ranged combat
+			Sequence.new({
+				InRange.new(8, 50),
+				RangedAttack.new(),
+			}),
 
-    --  SUIVRE LA CIBLE
+			-- sinon → follow
+			FollowTarget.new(),
+		}),
+	}),
+
     Sequence.new({
-        DetectionVision.new(100),
+        HasLastSeenPosition.new(), -- condition basée sur le blackboard
+        
         FollowTarget.new(),
     }),
 
-       --  RAVITAILLEMENT EN MUNITIONS
-    Sequence.new({
-        NeedsMunitions.new(),
-        GetMunitions.new(),
-    }),
+	-- =========================
+	-- SURVIE / LOGISTIQUE
+	-- =========================
+	Sequence.new({
+		NeedsReload.new(),
+		ReloadWeapon.new(),
+	}),
 
-    --  PATROUILLE
-    Patrol.new(),
-}) 
+	Sequence.new({
+		NeedsMunitions.new(),
+		GetMunitions.new(),
+	}),
 
+	-- =========================
+	-- PATROUILLE
+	-- =========================
+	Patrol.new(),
+})
+
+
+local PerceptionVision = DetectionVision.new(100)
+local function PerceptionUpdate(hunter)
+    PerceptionVision:Run(hunter, blackboard)
+end
 
 --[[
     Initialise et démarre l'arbre de comportement du chasseur
@@ -77,6 +100,7 @@ local BT = Selector.new({
 function HunterBT.Start(hunter)
     -- Boucle de mise à jour de l'arbre de comportement
     RunService.Heartbeat:Connect(function()
+        PerceptionUpdate(hunter)
         BT:Run(hunter, blackboard)
     end)
 end
