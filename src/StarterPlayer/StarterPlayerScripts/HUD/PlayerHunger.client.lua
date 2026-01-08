@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local HungerEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("HungerChangeEvent")
 local LifeEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
@@ -19,20 +20,27 @@ local function UpdateBar()
 	BarreDeFaim.Size = UDim2.new(satiety/100, 0, 1, 0)
 end
 
+local rate = 1 -- taux de faim par seconde
+local last = os.clock()
 --[[
 	Début de la boucle de diminution de la faim
 ]]
 local function Start()
-    while true do
-        task.wait(1)
-		if not isAlive then
-			break
+    RunService.Heartbeat:Connect(function(dt)
+		if not start or not isAlive then
+			return
 		end
+		local now = os.clock()
+		local newdt = now - last
+		last = now
+
+		local satietyToRemove = rate * newdt
+		
 		if satiety > 0 then
-			satiety-=1
+			satiety -= satietyToRemove
 		end
 		UpdateBar()
-    end
+    end)
 end
 
 --[[

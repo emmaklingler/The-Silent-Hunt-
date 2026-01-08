@@ -447,6 +447,14 @@ function Hunter:TryRangedAttack(target)
 		self.ammoInMag, self.magSize, self.ammoReserve
 	))
 
+	local targetPos = Vector3.new(
+		target.Root.Position.X,
+		self.Root.Position.Y,
+		target.Root.Position.Z
+	)
+	-- Rotation vers la target (uniquement X/Z)
+	self.Root.CFrame = CFrame.lookAt(self.Root.Position, targetPos)
+
 	self:ChangeState("AttackArme")
 	target:RemoveHealth(self.rangedAttackDamage)
 
