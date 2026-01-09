@@ -14,7 +14,6 @@ local CloseAttack = require(Node.ActionNode.CloseAttack)
 local RangedAttack = require(Node.ActionNode.RangedAttack)
 local ReloadWeapon = require(Node.ActionNode.ReloadWeapon)
 local GetMunitions = require(Node.ActionNode.GetMunitions)
-local MakeTrap = require(Node.ActionNode.MakeTrap) -- ✅ AJOUT
 
 local NeedsReload = require(Node.ConditionNode.NeedsReload)
 local NeedsMunitions = require(Node.ConditionNode.NeedsMunitions)
@@ -52,8 +51,6 @@ local BT = Selector.new({
 				RangedAttack.new(),
 			}),
 
-			-- ✅ poser un piège (si tir / mêlée pas possible)
-			MakeTrap.new(),
 
 			-- sinon → follow
 			FollowTarget.new(),

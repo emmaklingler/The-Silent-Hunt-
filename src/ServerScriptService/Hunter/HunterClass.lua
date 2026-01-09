@@ -23,7 +23,6 @@ function Hunter.new(model: Model)
 	-- =============================
 	-- Paramètres d'attaque close
 	-- =============================
-	self.closeAttackRange = 10
 	self.closeAttackDamage = 20
 	self.attackCooldown = 3
 	self.attackDuration = 1.5
@@ -31,13 +30,15 @@ function Hunter.new(model: Model)
 	-- =============================
 	-- Paramètres d'attaque à distance
 	-- =============================
-	self.rangedMinRange = 12
-	self.rangedMaxRange = 50
 	self.rangedAttackDamage = 15
 
 	-- Timing tir
 	self.rangedCooldown = 2
-	self.rangedAttackDuration = 1
+	self.rangedAttackDuration = 0.5
+
+	self.isAiming = false
+	self.aimEndTime = 0
+	self.aimDuration = 1
 
 	-- =============================
 	-- Munitions
@@ -58,6 +59,7 @@ function Hunter.new(model: Model)
 	-- =============================
 	-- Pathfinding state
 	-- =============================
+	self.lastPathCompute = 0
 	self.pathState = nil
 	self.patrolState = nil
 	self.moveState = nil
@@ -108,11 +110,13 @@ end
 	@return table - liste de waypoints du chemin, ou nil si le chemin ne peut pas être calculé
 ]]
 function Hunter:ComputePath(targetPosition)
+	self.lastPathCompute = os.clock()
+
     local path = PathfindingService:CreatePath({
-        AgentRadius = 6,
-        AgentHeight = 20,
+        AgentRadius = 8,
+        AgentHeight = 25,
         AgentCanJump = false,
-		WaypointSpacing = 6,
+		WaypointSpacing = 6, 
 		Costs = {
 			Danger = math.huge,
 		}
@@ -125,6 +129,28 @@ function Hunter:ComputePath(targetPosition)
     end
 
     return path:GetWaypoints()
+end
+
+local function IsWaypointValid(root, waypoint)
+	local dirToWaypoint = (waypoint.Position - root.Position)
+	if dirToWaypoint.Magnitude < 4 then
+		return false
+	end
+
+	local forward = root.CFrame.LookVector
+	local dot = forward:Dot(dirToWaypoint.Unit)
+
+	-- dot < 0 => derrière le perso
+	return dot > 0
+end
+
+local function GetFirstValidWaypoint(root, waypoints)
+	for i, wp in ipairs(waypoints) do
+		if IsWaypointValid(root, wp) then
+			return i
+		end
+	end
+	return 1
 end
 
 --Pour DEBUG
@@ -146,6 +172,11 @@ function Hunter:Follow(position, timeout)
 
 	-- start move si nécessaire
 	if not self.pathState then
+
+		if os.clock() - self.lastPathCompute < 0.5 then
+			return Status.RUNNING
+		end
+
         local waypoints = self:ComputePath(position)
         if not waypoints or #waypoints == 0 then
             return Status.FAILURE
@@ -171,13 +202,13 @@ function Hunter:Follow(position, timeout)
         }
 
         self:ChangeState("Walk")
-        self.Humanoid:MoveTo(waypoints[1].Position)
+        self.Humanoid:MoveTo(waypoints[GetFirstValidWaypoint(self.Root, waypoints)].Position)
         return Status.RUNNING
     end
 
 
 	-- TARGET A BOUGÉ -> RECALCUL
-    if (self.pathState.target - position).Magnitude > 5 then
+    if (self.pathState.target - position).Magnitude > 12 then
         self:StopMove()
         return Status.RUNNING
     end
@@ -287,12 +318,7 @@ function Hunter:TryAttackClose(target)
 		end
 		return Status.RUNNING
 	end
-	
-	-- conditions
-	local dist = (self.Root.Position - target.Root.Position).Magnitude
-	if dist > self.closeAttackRange then
-		return Status.FAILURE
-	end
+
 
 	-- cooldown
 	if os.clock() < (self.nextAttackTime or 0) then
@@ -387,79 +413,102 @@ function Hunter:TryRangedAttack(target)
 		return Status.FAILURE
 	end
 
-	-- tir déjà en cours
+	-- =========================
+	-- PHASE 1 : TIR EN COURS
+	-- =========================
 	if self.isRangedAttacking then
 		if os.clock() >= self.attackEndTime then
 			self.isRangedAttacking = false
-
-			-- reset flag
 			self.rangedDidShoot = false
-
 			self:ChangeState("Idle")
-			print("[ATTACK] Fin du tir")
 			return Status.SUCCESS
 		end
 		return Status.RUNNING
 	end
 
-	-- distance
+	-- =========================
+	-- PHASE 2 : VISÉE (WIND-UP)
+	-- =========================
+	if self.isAiming then
+		-- rotation continue vers la cible
+		local lookPos = Vector3.new(
+			target.Root.Position.X,
+			self.Root.Position.Y,
+			target.Root.Position.Z
+		)
+		self.Root.CFrame = CFrame.lookAt(self.Root.Position, lookPos)
+
+		if os.clock() >= self.aimEndTime then
+			-- fin de visée → on tire
+			self.isAiming = false
+			self.isRangedAttacking = true
+
+			self.attackEndTime = os.clock() + self.rangedAttackDuration
+			self.nextRangedTime = os.clock() + self.rangedCooldown
+			self.ammoInMag -= 1
+
+			--Amélioration, refait un raycast avant de tirer
+			--TEMP POUR TEST
+			local att1 = Instance.new("Attachment")
+			att1.Parent = self.Model:WaitForChild("Backpack")
+			local att2 = Instance.new("Attachment")
+			att2.Parent = target.Root
+			local beam = Instance.new("Beam")
+			beam.Attachment0 = att1
+			beam.Attachment1 = att2
+			beam.Parent = self.Root
+			Debris:AddItem(att1, 0.2)
+			Debris:AddItem(att2, 0.2)
+			Debris:AddItem(beam, 0.2)
+
+			--TEMP POUR TEST
+			self:ChangeState("AttackArme")
+			target:RemoveHealth(self.rangedAttackDamage)
+
+			print("[SHOT] Tir après visée")
+		end
+
+		return Status.RUNNING
+	end
+
+	-- =========================
+	-- PHASE 0 : CONDITIONS
+	-- =========================
 	local origin = self.Root.Position
 	local targetPos = target.Root.Position
 	local toTarget = targetPos - origin
-	local dist = toTarget.Magnitude
+	
 
-	if dist < self.rangedMinRange or dist > self.rangedMaxRange then
-		return Status.FAILURE
-	end
-
-	-- cooldown
 	if os.clock() < (self.nextRangedTime or 0) then
 		return Status.FAILURE
 	end
 
-	-- plus de balles → on FAIL, le BT décidera RELOAD / REFILL
 	if (self.ammoInMag or 0) <= 0 then
 		return Status.FAILURE
 	end
 
-	-- Raycast : vérifie la ligne de vue
+	-- Raycast ligne de vue
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = { self.Model }
 
 	local result = workspace:Raycast(origin, toTarget, params)
-
-	-- Si on touche quelque chose ET que ce n'est PAS le lapin → bloqué
 	if not result or not result.Instance:IsDescendantOf(target.Model) then
 		return Status.FAILURE
 	end
-	-- start attack
+
+	-- =========================
+	-- DÉBUT VISÉE
+	-- =========================
 	self:StopMove()
 
-	self.isRangedAttacking = true
-	self.rangedDidShoot = true --  marque que ce cycle a bien tiré
-	self.attackEndTime = os.clock() + self.rangedAttackDuration
-	self.nextRangedTime = os.clock() + self.rangedCooldown
+	self.isAiming = true
+	self.aimEndTime = os.clock() + self.aimDuration
+	self:ChangeState("Aim")
 
-	self.ammoInMag -= 1
-
-	print(string.format("[SHOT] Tir | mag=%d/%d | reserve=%d",
-		self.ammoInMag, self.magSize, self.ammoReserve
-	))
-
-	local targetPos = Vector3.new(
-		target.Root.Position.X,
-		self.Root.Position.Y,
-		target.Root.Position.Z
-	)
-	-- Rotation vers la target (uniquement X/Z)
-	self.Root.CFrame = CFrame.lookAt(self.Root.Position, targetPos)
-
-	self:ChangeState("AttackArme")
-	target:RemoveHealth(self.rangedAttackDamage)
+	print("[AIM] Début de la visée")
 
 	return Status.RUNNING
-
 end
 
 
