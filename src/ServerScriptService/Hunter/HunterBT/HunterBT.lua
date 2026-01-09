@@ -8,8 +8,6 @@ local Selector = require(Node.Utiles.Selector)
 local WeightedSelector = require(Node.Utiles.WeightedSelector)
 local Sequence = require(Node.Utiles.Sequence)
 
-
-
 local FollowTarget = require(Node.ActionNode.FollowTarget)
 local Patrol = require(Node.ActionNode.Patrol)
 local CloseAttack = require(Node.ActionNode.CloseAttack)
@@ -17,13 +15,11 @@ local RangedAttack = require(Node.ActionNode.RangedAttack)
 local ReloadWeapon = require(Node.ActionNode.ReloadWeapon)
 local GetMunitions = require(Node.ActionNode.GetMunitions)
 
-
 local NeedsReload = require(Node.ConditionNode.NeedsReload)
 local NeedsMunitions = require(Node.ConditionNode.NeedsMunitions)
 local InRange = require(Node.ConditionNode.InRange)
 local HasTarget = require(Node.ConditionNode.HasTarget)
 local HasLastSeenPosition = require(Node.ConditionNode.HasLastSeenPosition)
-
 
 local DetectionVision = require(Node.Perception.DetectionVision)
 

@@ -46,7 +46,7 @@ function Rabbit:RemoveSatiety(amount)
         self.Satiety -= amount
         --Si satiety < 0 Meurt
     else
-        self:RemoveHealth(1)
+        self:RemoveHealth(amount)
     end
 end
 

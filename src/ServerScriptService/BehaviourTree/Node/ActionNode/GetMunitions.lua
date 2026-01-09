@@ -26,7 +26,7 @@ function GetMunitions:Run(hunter, blackboard)
 	if not pos then return Status.FAILURE end
 
 	-- On avance vers le point
-	local move = hunter.Follow and hunter:Follow(pos, 100000000) or Status.FAILURE
+	local move = hunter.Follow and hunter:Follow(pos, 5) or Status.FAILURE
 	if move == Status.SUCCESS then
 		if hunter.RefillMunitions then
 			return hunter:RefillMunitions() and Status.SUCCESS or Status.FAILURE
