@@ -15,11 +15,10 @@ end
             Status.FAILURE si l'attaque ne peut pas être effectuée
 ]]
 function RangedAttack:Run(chasseur, blackboard)
-	local target = blackboard.target
-	if not target then
-		return Status.FAILURE
-	end
-
+	local target, type =  blackboard:GetBestTargetOrPosition()
+    if type ~= "Target" then return Status.FAILURE end
+    if not target then return Status.FAILURE end
+    
 	return chasseur:TryRangedAttack(target)
 end
 

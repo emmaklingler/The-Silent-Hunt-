@@ -549,19 +549,6 @@ function Hunter:TryPlaceTrap()
 	end
 	self._nextTrapTime = os.clock() + 2 -- cooldown entre chaque piège
 
-	-- Asset dans ServerStorage/Asset/Trap (comme tu l’as montré)
-	local assetsFolder = ServerStorage:FindFirstChild("Asset")
-	if not assetsFolder then
-		warn("Asset folder not found in ServerStorage")
-		return false
-	end
-
-	local trapTemplate = assetsFolder:FindFirstChild("Trap")
-	if not trapTemplate then
-		warn("Trap asset not found in ServerStorage/Asset")
-		return false
-	end
-
 	-- Position: aux pieds du chasseur (simple)
 	local position = self.Root.Position - Vector3.new(0, self.Root.Size.Y * 0.5, 0)
 	
@@ -570,7 +557,6 @@ function Hunter:TryPlaceTrap()
 	end
 
 	local trap = Trap.new(self, position)
-	trap:Spawn(trapTemplate)
 
 	self.trapsStock -= 1
 	print(string.format("[TRAP] posé | stock=%d/%d", self.trapsStock, self.trapsStockMax))

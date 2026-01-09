@@ -8,21 +8,21 @@ local Selector = require(Node.Utiles.Selector)
 local WeightedSelector = require(Node.Utiles.WeightedSelector)
 local Sequence = require(Node.Utiles.Sequence)
 
-
-
 local FollowTarget = require(Node.ActionNode.FollowTarget)
 local Patrol = require(Node.ActionNode.Patrol)
 local CloseAttack = require(Node.ActionNode.CloseAttack)
 local RangedAttack = require(Node.ActionNode.RangedAttack)
-local NeedsReload = require(Node.ConditionNode.NeedsReload)
 local ReloadWeapon = require(Node.ActionNode.ReloadWeapon)
-local NeedsMunitions = require(Node.ConditionNode.NeedsMunitions)
 local GetMunitions = require(Node.ActionNode.GetMunitions)
-local DetectionAround = require(Node.ConditionNode.DetectionAround)
-local DetectionVision = require(Node.ConditionNode.DetectionVision)
-local MakeTrap = require(Node.ActionNode.MakeTrap)
+local MakeTrap = require(Node.ActionNode.MakeTrap) -- ✅ AJOUT
 
+local NeedsReload = require(Node.ConditionNode.NeedsReload)
+local NeedsMunitions = require(Node.ConditionNode.NeedsMunitions)
+local InRange = require(Node.ConditionNode.InRange)
+local HasTarget = require(Node.ConditionNode.HasTarget)
+local HasLastSeenPosition = require(Node.ConditionNode.HasLastSeenPosition)
 
+local DetectionVision = require(Node.Perception.DetectionVision)
 
 local Blackboard = require(Node.Utiles.Blackboard)
 
@@ -32,60 +32,71 @@ local blackboard = Blackboard.new()
 -- Définition de l'arbre de comportement du chasseur
 local BT = Selector.new({
 
- 
- 
+	-- =========================
+	-- COMBAT (prioritaire)
+	-- =========================
+	Sequence.new({
+		HasTarget.new(),
+		
+		Selector.new({
 
-    --  ATTAQUE AU CORPS À CORPS
-    Sequence.new({
-        DetectionAround.new(8),
-        CloseAttack.new(),
-    }),
-    
+			-- close combat
+			Sequence.new({
+				InRange.new(0, 8),
+				CloseAttack.new(),
+			}),
 
-    --  RECHARGER L'ARME
-    Sequence.new({
-        NeedsReload.new(),
-        ReloadWeapon.new(),
-    }),
+			-- ranged combat
+			Sequence.new({
+				InRange.new(8, 50),
+				RangedAttack.new(),
+			}),
 
-    --  ATTAQUE À DISTANCE
-    Sequence.new({
-        DetectionVision.new(50),
-        RangedAttack.new(),
-    }),
+			-- ✅ poser un piège (si tir / mêlée pas possible)
+			MakeTrap.new(),
 
-    --  POSER UN PIÈGE
-    Sequence.new({
-        DetectionVision.new(50),
-        MakeTrap.new(),
-    }),
+			-- sinon → follow
+			FollowTarget.new(),
+		}),
+	}),
 
-    --  SUIVRE LA CIBLE
-    Sequence.new({
-        DetectionVision.new(100),
-        FollowTarget.new(),
-    }),
+	-- =========================
+	-- SUIVRE DERNIÈRE POSITION
+	-- =========================
+	Sequence.new({
+		HasLastSeenPosition.new(),
+		FollowTarget.new(),
+	}),
 
-       --  RAVITAILLEMENT EN MUNITIONS
-    Sequence.new({
-        NeedsMunitions.new(),
-        GetMunitions.new(),
-    }),
+	-- =========================
+	-- SURVIE / LOGISTIQUE
+	-- =========================
+	Sequence.new({
+		NeedsReload.new(),
+		ReloadWeapon.new(),
+	}),
 
-    --  PATROUILLE
-    Patrol.new(),
-}) 
+	Sequence.new({
+		NeedsMunitions.new(),
+		GetMunitions.new(),
+	}),
 
+	-- =========================
+	-- PATROUILLE
+	-- =========================
+	Patrol.new(),
+})
 
---[[
-    Initialise et démarre l'arbre de comportement du chasseur
-    @param hunter: classe du chasseur
-]]
+local PerceptionVision = DetectionVision.new(100)
+local function PerceptionUpdate(hunter)
+	PerceptionVision:Run(hunter, blackboard)
+end
+
 function HunterBT.Start(hunter)
-    -- Boucle de mise à jour de l'arbre de comportement
-    RunService.Heartbeat:Connect(function()
-        BT:Run(hunter, blackboard)
-    end)
+	RunService.Heartbeat:Connect(function()
+		PerceptionUpdate(hunter)
+		BT:Run(hunter, blackboard)
+	end)
 end
 
 return HunterBT

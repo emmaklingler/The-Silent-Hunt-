@@ -15,12 +15,17 @@ end
 ]]
 
 function FollowTarget:Run(chasseur, blackboard)
-	local target = blackboard.target
-	if not target or not target.Root then
-		return Status.FAILURE
+	local target, type =  blackboard:GetBestTargetOrPosition()
+    if not target then return Status.FAILURE end
+	local pos = nil
+	if type == "Position" then
+		pos = target
+	elseif type == "Target" then
+		pos = target.Root.Position
 	end
+	if not pos then return Status.FAILURE end
 	
-	local result = chasseur:Follow(target.Root.Position, 5)
+	local result = chasseur:Follow(pos, 5)
 
 	return result
 end

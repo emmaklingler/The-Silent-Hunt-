@@ -14,14 +14,11 @@ end
     @return Status.SUCCESS si l'attaque est effectuée, sinon Status.FAILURE
 ]]
 function AttackTarget:Run(chasseur, blackboard)
-	local target = blackboard.target
-	if not target then
-		return Status.FAILURE
-	end
-
-	local result = chasseur:TryAttackClose(target)
+	local target, type =  blackboard:GetBestTargetOrPosition()
+    if type ~= "Target" then return Status.FAILURE end
+    if not target then return Status.FAILURE end
 	
-	return result
+	return chasseur:TryAttackClose(target)
 end
 
 return AttackTarget 
