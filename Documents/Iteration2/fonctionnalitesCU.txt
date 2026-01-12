@@ -1,0 +1,65 @@
+PROJET : The Silent Hunt
+Itération II – IA du chasseur
+
+1) Fonctionnalités développées
+
+Lors de cette itération, les fonctionnalités suivantes ont été développées :
+
+- Détection du lapin par vision (raycast + champ de vision)
+- Mémorisation de la dernière position connue du lapin
+- Poursuite du lapin par pathfinding
+- Attaque au corps à corps
+- Attaque à distance avec :
+  - phase de visée
+  - vérification de ligne de vue
+  - cooldown
+  - consommation de munitions
+- Gestion d’un chargeur et d’une réserve de munitions
+- Rechargement du chargeur
+- Déplacement vers un point de ravitaillement
+- Récupération de munitions
+- Système de pièges basé sur la mémoire
+- Limitation du nombre de pièges (5 maximum)
+
+
+2) Cas d’utilisation
+
+CU1 – Le lapin est détecté  
+Le chasseur voit le lapin, le poursuit et tente de l’attaquer.
+
+CU2 – Le lapin se cache ou disparaît de la vision  
+Le chasseur conserve la dernière position connue et s’y rend.
+
+CU3 – Le lapin repasse par une zone piégée  
+Le lapin déclenche un piège et subit des dégâts.
+
+CU4 – Le chasseur n’a plus de balles dans son chargeur  
+Le chasseur recharge son arme.
+
+CU5 – Le chasseur n’a plus aucune munition  
+Le chasseur se rend au point de ravitaillement pour se réapprovisionner.
+
+
+3) Rôle des membres du groupe
+
+Emma :
+- Système de vision (raycasting)
+- Attaque à distance
+- Gestion des munitions
+- Rechargement
+- Ravitaillement
+- Début du système de pièges
+- Intégration dans le Behaviour Tree
+
+Hugo :
+- Pathfinding
+- Multijoueur
+- Synchronisation client/serveur
+- Mort du lapin
+- Apparition des carottes
+- Sons du lapin et des carottes
+- Débogage du déplacement du lapin
+
+Noah :
+- Animation du chasseur
+- Début du système de buissons (cachettes)
