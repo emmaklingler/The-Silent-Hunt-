@@ -22,6 +22,7 @@ local HasTarget = require(Node.ConditionNode.HasTarget)
 local HasLastSeenPosition = require(Node.ConditionNode.HasLastSeenPosition)
 
 local DetectionVision = require(Node.Perception.DetectionVision)
+local MakeTrap = require(Node.ActionNode.MakeTrap)
 
 local Blackboard = require(Node.Utiles.Blackboard)
 
@@ -58,12 +59,13 @@ local BT = Selector.new({
 	}),
 
 	-- =========================
-	-- SUIVRE DERNIÈRE POSITION
-	-- =========================
-	Sequence.new({
-		HasLastSeenPosition.new(),
-		FollowTarget.new(),
-	}),
+    -- SUIVRE DERNIÈRE POSITION
+    -- =========================
+    Sequence.new({
+        HasLastSeenPosition.new(),
+        FollowTarget.new(),
+        MakeTrap.new(6), -- pose un piège quand il est arrivé au lastKnownPosition
+    }),
 
 	-- =========================
 	-- SURVIE / LOGISTIQUE

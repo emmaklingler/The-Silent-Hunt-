@@ -587,36 +587,33 @@ end
 --===========================================================
 local Trap = require(script.Parent.Objets.Trap)
 
-function Hunter:TryPlaceTrap()
-	if not self.Root then
-		return false
-	end
+
+function Hunter:TryPlaceTrapAt(position)
+	if not self.Root or not position then return false end
 
 	self._nextTrapTime = self._nextTrapTime or 0
-	if os.clock() < self._nextTrapTime then
-		return false
-	end
-	self._nextTrapTime = os.clock() + 2 -- cooldown entre chaque piège
+	if os.clock() < self._nextTrapTime then return false end
+	self._nextTrapTime = os.clock() + 2
 
-	-- Position: aux pieds du chasseur (simple)
-	local position = self.Root.Position - Vector3.new(0, self.Root.Size.Y * 0.5, 0)
-	
-	if (self.trapsStock or 0) <= 0 then
-		return false
-	end
+	if (self.trapsStock or 0) <= 0 then return false end
+
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	rayParams.FilterDescendantsInstances = { self.Model }
+
+	local origin = position + Vector3.new(0, 10, 0)
+	local result = workspace:Raycast(origin, Vector3.new(0, -80, 0), rayParams)
+	if result then position = result.Position end
 
 	local trap = Trap.new(self, position)
 
 	self.trapsStock -= 1
-	print(string.format("[TRAP] posé | stock=%d/%d", self.trapsStock, self.trapsStockMax))
-
-
 	self.ActiveTraps = self.ActiveTraps or {}
 	table.insert(self.ActiveTraps, trap)
-	print("[TRAP] Piège posé à", position)
+
+	print(string.format("[TRAP] posé à lastKnown | stock=%d/%d", self.trapsStock, self.trapsStockMax))
 	return true
 end
-
 
 
 
