@@ -23,8 +23,7 @@ local HasTarget = require(Node.ConditionNode.HasTarget)
 local HasLastSeenPosition = require(Node.ConditionNode.HasLastSeenPosition)
 
 local DetectionVision = require(Node.Perception.DetectionVision)
-
-
+local MakeTrap = require(Node.ActionNode.MakeTrap)
 
 local Blackboard = require(Node.Utiles.Blackboard)
 
@@ -54,15 +53,19 @@ local BT = Selector.new({
 				RangedAttack.new(),
 			}),
 
+
 			-- sinon → follow
 			FollowTarget.new(),
 		}),
 	}),
-	
+
+	-- =========================
+    -- SUIVRE DERNIÈRE POSITION
+    -- =========================
     Sequence.new({
-        HasLastSeenPosition.new(), -- condition basée sur le blackboard
-        
+        HasLastSeenPosition.new(),
         FollowTarget.new(),
+        MakeTrap.new(6), -- pose un piège quand il est arrivé au lastKnownPosition
     }),
 
 	-- =========================
@@ -87,19 +90,14 @@ local BT = Selector.new({
 
 local PerceptionVision = DetectionVision.new(150)
 local function PerceptionUpdate(hunter)
-    PerceptionVision:Run(hunter, blackboard)
+	PerceptionVision:Run(hunter, blackboard)
 end
 
---[[
-    Initialise et démarre l'arbre de comportement du chasseur
-    @param hunter: classe du chasseur
-]]
 function HunterBT.Start(hunter)
-    -- Boucle de mise à jour de l'arbre de comportement
-    RunService.Heartbeat:Connect(function()
-        PerceptionUpdate(hunter)
-        BT:Run(hunter, blackboard)
-    end)
+	RunService.Heartbeat:Connect(function()
+		PerceptionUpdate(hunter)
+		BT:Run(hunter, blackboard)
+	end)
 end
 
 return HunterBT

@@ -5,6 +5,7 @@ local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PathfindingService = game:GetService("PathfindingService")
 local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
 local Debug = require(game.ServerScriptService.Game.Debug)
@@ -81,6 +82,16 @@ function Hunter.new(model: Model)
 
 	self.nextAttackTime = 0      -- close
 	self.nextRangedTime = 0      -- ranged
+
+	-- =============================
+	-- Pèges
+	-- =============================
+	-- self.ActiveTraps = {}
+	-- self.maxActiveTraps = 4
+	self.trapsStockMax = 5
+	self.trapsStock = self.trapsStockMax
+
+
 
 	return self
 end
@@ -592,6 +603,40 @@ function Hunter:RefillMunitions()
 
 	return true
 end
+
+--===========================================================
+-- Méthodes spécifiques à la creation de piège 
+--===========================================================
+local Trap = require(script.Parent.Objets.Trap)
+
+
+function Hunter:TryPlaceTrapAt(position)
+	if not self.Root or not position then return false end
+
+	self._nextTrapTime = self._nextTrapTime or 0
+	if os.clock() < self._nextTrapTime then return false end
+	self._nextTrapTime = os.clock() + 2
+
+	if (self.trapsStock or 0) <= 0 then return false end
+
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Exclude
+	rayParams.FilterDescendantsInstances = { self.Model }
+
+	local origin = position + Vector3.new(0, 10, 0)
+	local result = workspace:Raycast(origin, Vector3.new(0, -80, 0), rayParams)
+	if result then position = result.Position end
+
+	local trap = Trap.new(self, position)
+
+	self.trapsStock -= 1
+	self.ActiveTraps = self.ActiveTraps or {}
+	table.insert(self.ActiveTraps, trap)
+
+	print(string.format("[TRAP] posé à lastKnown | stock=%d/%d", self.trapsStock, self.trapsStockMax))
+	return true
+end
+
 
 
 

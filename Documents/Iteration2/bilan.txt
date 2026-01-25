@@ -1,0 +1,43 @@
+Itération II : Bilan
+
+État de la version :
+
+L’IA du chasseur est fonctionnelle et jouable.
+Le chasseur est capable de détecter le lapin, de le poursuivre, de l’attaquer à distance, de gérer ses munitions et de poser un premier type de piège basé sur la mémoire.
+
+Le Behaviour Tree a été amélioré et permet désormais une gestion claire des priorités :
+combat, poursuite, rechargement, ravitaillement et pose de pièges.
+
+Le système multijoueur et la synchronisation client/serveur sont opérationnels.
+
+Bugs et fonctionnalités non terminées
+
+Certaines fonctionnalités prévues n’ont pas encore été finalisées dans cette itération :
+- La détection du bruit n’est pas encore fonctionnelle
+- La détection de traces n’est pas encore implémentée
+- Les animations avancées (recharge, arrêt de patrouille, rotation 360°) ne sont pas encore intégrées
+- Les tests unitaires complets du chasseur et du lapin ne sont pas encore réalisés
+- Le système de buisson (cachette) est encore en cours
+- l'utilisation de Utilty AI
+
+
+Ces éléments sont planifiés pour l’itération suivante.
+
+Validation des fonctionnalités réaliséesgit target
+
+Les éléments suivants sont validés :
+- Behaviour Tree amélioré 
+- Détection par vision
+- Attaque à distance
+- Gestion du chargeur et de la réserve de munitions
+- Rechargement
+- Ravitaillement en munitions
+- Début du système de pièges
+- Multijoueur et synchronisation
+
+Conformité avec l’étude préalable
+
+Les choix réalisés dans cette itération sont conformes à l’étude préalable du projet.
+L’IA est bien basée sur un Behaviour Tree, utilise la vision, la mémoire et la gestion de ressources pour prendre ses décisions.
+
+Même si certaines fonctionnalités avancées sont encore en cours, la structure principale de l’IA et du gameplay correspond à la vision initiale du projet : un jeu de traque basé sur la tension, la fuite et l’anticipation du joueur.

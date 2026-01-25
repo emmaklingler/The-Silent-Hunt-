@@ -19,7 +19,8 @@ function Blackboard.new()
 
 	self.lastStimulusTime = 0
 	self.lastStimulusType = nil
-    self.memoryDuration = 5
+    self.memoryDuration = 20
+	
 
 	self.hasVisual = false
 
@@ -85,6 +86,9 @@ function Blackboard:GetBestTargetOrPosition()
 	return nil, "None"
 end
 
+function Blackboard:ClearMemory()
+	self.lastKnownPosition = nil
+end
 
 
 
