@@ -37,7 +37,7 @@ function GameManager:StartGame()
     end
 
     --Créer le chasseur : 
-    local HunterModel = workspace:WaitForChild("Adventurer")
+    local HunterModel = workspace:WaitForChild("Chasseur_Test")
     local Hunter = HunterClass.new(HunterModel)
 
     HunterBT.Start(Hunter) 

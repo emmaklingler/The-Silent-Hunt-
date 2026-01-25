@@ -4,20 +4,36 @@ local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForC
 
 local model = nil
 
-local idleAnim = Instance.new("Animation") 
-idleAnim.AnimationId = "rbxassetid://140499235621994" 
-local walkAnim = Instance.new("Animation") 
-walkAnim.AnimationId = "rbxassetid://86588507256891" 
-local attackAnim = Instance.new("Animation") 
-attackAnim.AnimationId = "rbxassetid://94329896886564" 
-local shootAnim = Instance.new("Animation") 
-shootAnim.AnimationId = "rbxassetid://98951013688597" 
+local idleAnim = Instance.new("Animation")                  -- 0.8s
+idleAnim.AnimationId = "rbxassetid://105394594977781"   
+
+local attackFootAnim = Instance.new("Animation")            -- 0.5s
+attackFootAnim.AnimationId = "rbxassetid://118974947207883"     
+
+local walkAnim = Instance.new("Animation")                  -- 0.8s
+walkAnim.AnimationId = "rbxassetid://96270962614028" 
+
+local runAnim = Instance.new("Animation")                   -- 0.8s
+runAnim.AnimationId = "rbxassetid://97087449242424" 
+
+local shootAnim = Instance.new("Animation")                 -- 0.5s
+shootAnim.AnimationId = "rbxassetid://130777871148436" 
+
+local reloadAnim = Instance.new("Animation")                -- 2s
+reloadAnim.AnimationId = "rbxassetid://78142182855689" 
+
+local aimAnim = Instance.new("Animation")                   -- 0s
+aimAnim.AnimationId = "rbxassetid://89488560177926" 
+
+
 
 
 local idleTrack = nil
 local walkTrack = nil
-local attackTrack = nil
+local attackFootTrack = nil
 local shootTrack = nil
+local reloadTrack = nil
+local aimTrack = nil
 
 
 ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state: string)
@@ -26,11 +42,14 @@ ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state:
         model = hunterModel
         local humanoid = model:WaitForChild("Humanoid")
         local animator = humanoid:WaitForChild("Animator")  
+
         idleTrack = animator:LoadAnimation(idleAnim)
         walkTrack = animator:LoadAnimation(walkAnim)
-        attackTrack = animator:LoadAnimation(attackAnim)
+        attackFootTrack = animator:LoadAnimation(attackFootAnim)
         shootTrack = animator:LoadAnimation(shootAnim)
-        idleTrack.Looped = true
+        reloadTrack = animator:LoadAnimation(reloadAnim)
+        aimTrack = animator:LoadAnimation(aimAnim)
+
     end
 
     if state == "Idle" then
@@ -46,14 +65,26 @@ ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state:
     end
 
     if state == "AttackPied" then
-        attackTrack:Play()
+        attackFootTrack:Play()
     else
-        attackTrack:Stop()
+        attackFootTrack:Stop()
     end
 
-    if state == "AttackArme" then
+    if state == "Shoot" then
         shootTrack:Play()
     else
         shootTrack:Stop()
+    end
+
+    if state == "Reload" then
+        reloadTrack:Play()
+    else
+        reloadTrack:Stop()
+    end
+
+    if state == "Aim" then
+        aimTrack:Play()
+    else
+        aimTrack:Stop()
     end
 end)

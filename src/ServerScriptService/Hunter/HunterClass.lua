@@ -7,6 +7,7 @@ local PathfindingService = game:GetService("PathfindingService")
 local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
 
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
+local Debug = require(game.ServerScriptService.Game.Debug)
 
 --[[
     Classe Hunter: gère le comportement et les actions d'un chasseur dans le jeu.
@@ -24,13 +25,15 @@ function Hunter.new(model: Model)
 	-- =============================
 	self.closeAttackDamage = 20
 	self.attackCooldown = 3
-	self.attackDuration = 1.5
+	self.attackDuration = 0.5
 
 	-- =============================
 	-- Paramètres d'attaque à distance
 	-- =============================
 	self.rangedAttackDamage = 15
 
+	self.rangedRange = 100
+	self.rangedContext = nil
 	-- Timing tir
 	self.rangedCooldown = 2
 	self.rangedAttackDuration = 0.5
@@ -51,7 +54,7 @@ function Hunter.new(model: Model)
 	-- =============================
 	-- Reload
 	-- =============================
-	self.reloadDuration = 3
+	self.reloadDuration = 2
 	self.isReloading = false
 	self.reloadEndTime = 0
 
@@ -84,12 +87,14 @@ end
 
 --[[
 	Arrête le mouvement du chasseur
+	@param anim: boolean - si true, change l'état en "Idle"
 ]]
-function Hunter:StopMove()
+function Hunter:StopMove(anim:true)
 	self.moveState = nil
 	self.patrolState = nil
 	self.pathState = nil
 	self.Humanoid:Move(Vector3.zero)
+	if not anim then return end
 	self:ChangeState("Idle")
 end
 
@@ -162,7 +167,7 @@ function Hunter:Follow(position, timeout)
 	-- start move si nécessaire
 	if not self.pathState then
 
-		if os.clock() - self.lastPathCompute < 0.5 then
+		if os.clock() - self.lastPathCompute < 0.1 then
 			return Status.RUNNING
 		end
 
@@ -196,9 +201,10 @@ function Hunter:Follow(position, timeout)
     end
 
 
+	
 	-- TARGET A BOUGÉ -> RECALCUL
     if (self.pathState.target - position).Magnitude > 12 then
-        self:StopMove()
+        self:StopMove(false)
         return Status.RUNNING
     end
 
@@ -211,7 +217,9 @@ function Hunter:Follow(position, timeout)
 	local waypoint = self.pathState.waypoints[self.pathState.index]
 
     -- ATTEINT LE WAYPOINT
-    if (self.Root.Position - waypoint.Position).Magnitude < 3 then
+	local distanceToWaypoint =(Vector3.new(self.Root.Position.X, 0, self.Root.Position.Z) - 
+                      Vector3.new(waypoint.Position.X, 0, waypoint.Position.Z)).Magnitude
+    if distanceToWaypoint < 4 then	
         self.pathState.index += 1
 
         -- FIN DU CHEMIN
@@ -332,7 +340,8 @@ end
     @param state: string - le nouvel état du chasseur
 ]]
 function Hunter:ChangeState(state)
-    self.state = state
+	if self.state == state then return end
+	self.state = state
     --envoie au client
     ChangeStateHunterEvent:FireAllClients(self.Model, state)
 end
@@ -357,7 +366,7 @@ function Hunter:TryReloadWeapon()
 			self.ammoReserve -= take
 
 			self:ChangeState("Idle")
-			print(string.format("[RELOAD] Terminé -> chargeur=%d/%d | réserve=%d",
+			Debug.Print(string.format("[RELOAD] Terminé -> chargeur=%d/%d | réserve=%d",
 				self.ammoInMag, self.magSize, self.ammoReserve
 			))
 
@@ -369,7 +378,7 @@ function Hunter:TryReloadWeapon()
 
 	-- Conditions pour démarrer
 	if not self:CanReload() then
-		print(string.format("[RELOAD] Impossible -> chargeur=%d/%d | réserve=%d",
+		Debug.Print(string.format("[RELOAD] Impossible -> chargeur=%d/%d | réserve=%d",
 			self.ammoInMag, self.magSize, self.ammoReserve
 		))
 		return Status.FAILURE
@@ -381,7 +390,7 @@ function Hunter:TryReloadWeapon()
 	self.reloadEndTime = os.clock() + self.reloadDuration
 
 	self:ChangeState("Reload")
-	print(string.format("[RELOAD] Début -> chargeur=%d/%d | réserve=%d (%.1fs)",
+	Debug.Print(string.format("[RELOAD] Début -> chargeur=%d/%d | réserve=%d (%.1fs)",
 		self.ammoInMag, self.magSize, self.ammoReserve, self.reloadDuration
 	))
 
@@ -393,10 +402,7 @@ end
     @param target: RabbitClass - la cible à attaquer
 ]]
 function Hunter:TryRangedAttack(target)
-	if not target or not target.Root then
-		return Status.FAILURE
-	end
-
+	
 	-- pas de tir pendant reload
 	if self.isReloading then
 		return Status.FAILURE
@@ -419,16 +425,28 @@ function Hunter:TryRangedAttack(target)
 	-- PHASE 2 : VISÉE (WIND-UP)
 	-- =========================
 	if self.isAiming then
-		-- rotation continue vers la cible
-		local lookPos = Vector3.new(
-			target.Root.Position.X,
-			self.Root.Position.Y,
-			target.Root.Position.Z
+		local ctx = self.rangedContext
+
+		-- Mise à jour dynamique de la visée
+		if target and typeof(target) ~= "Vector3" and target.Root then
+			ctx.lastKnownPosition = target.Root.Position
+		end
+
+		local aimDir = (ctx.lastKnownPosition - self.Root.Position)
+		if aimDir.Magnitude > 0 then
+			ctx.aimDirection = aimDir.Unit
+		end
+
+		-- rotation visuelle
+		local lookPos = self.Root.Position + Vector3.new(
+			ctx.aimDirection.X,
+			0,
+			ctx.aimDirection.Z
 		)
 		self.Root.CFrame = CFrame.lookAt(self.Root.Position, lookPos)
 
 		if os.clock() >= self.aimEndTime then
-			-- fin de visée → on tire
+			-- passage au tir
 			self.isAiming = false
 			self.isRangedAttacking = true
 
@@ -436,25 +454,36 @@ function Hunter:TryRangedAttack(target)
 			self.nextRangedTime = os.clock() + self.rangedCooldown
 			self.ammoInMag -= 1
 
-			--Amélioration, refait un raycast avant de tirer
-			--TEMP POUR TEST
-			local att1 = Instance.new("Attachment")
-			att1.Parent = self.Model:WaitForChild("Backpack")
-			local att2 = Instance.new("Attachment")
-			att2.Parent = target.Root
-			local beam = Instance.new("Beam")
-			beam.Attachment0 = att1
-			beam.Attachment1 = att2
-			beam.Parent = self.Root
-			Debris:AddItem(att1, 0.2)
-			Debris:AddItem(att2, 0.2)
-			Debris:AddItem(beam, 0.2)
+			-- Raycast FINAL
+			local params = RaycastParams.new()
+			params.FilterType = Enum.RaycastFilterType.Exclude
+			params.FilterDescendantsInstances = { self.Model }
 
-			--TEMP POUR TEST
-			self:ChangeState("AttackArme")
-			target:RemoveHealth(self.rangedAttackDamage)
+			local result = workspace:Raycast(
+				self.Root.Position,
+				ctx.aimDirection * self.rangedRange,
+				params
+			)
 
-			print("[SHOT] Tir après visée")
+			if result then
+				local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
+				if hitModel == ctx.targetModel and target and typeof(target) ~= "Vector3" then
+					target:RemoveHealth(self.rangedAttackDamage)
+					Debug.Print("[SHOT] Touché")
+				else
+					Debug.Print("[SHOT] Obstacle")
+				end
+			end
+
+			self:ChangeState("Shoot")
+
+			-- effet visuel tir (particule, son, etc.) à ajouter ici
+			ReplicatedStorage.Remote.VFXEvent:FireAllClients({
+				type = "Shoot",
+				origin = self.Model.FusilUp.Attachment,
+				hitPosition = result and result.Position or (self.Root.Position + ctx.aimDirection * self.rangedRange)
+			})
+
 		end
 
 		return Status.RUNNING
@@ -463,26 +492,15 @@ function Hunter:TryRangedAttack(target)
 	-- =========================
 	-- PHASE 0 : CONDITIONS
 	-- =========================
-	local origin = self.Root.Position
-	local targetPos = target.Root.Position
-	local toTarget = targetPos - origin
-	
+	if not target or not target.Root then
+		return Status.FAILURE
+	end
 
 	if os.clock() < (self.nextRangedTime or 0) then
 		return Status.FAILURE
 	end
 
 	if (self.ammoInMag or 0) <= 0 then
-		return Status.FAILURE
-	end
-
-	-- Raycast ligne de vue
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { self.Model }
-
-	local result = workspace:Raycast(origin, toTarget, params)
-	if not result or not result.Instance:IsDescendantOf(target.Model) then
 		return Status.FAILURE
 	end
 
@@ -493,10 +511,14 @@ function Hunter:TryRangedAttack(target)
 
 	self.isAiming = true
 	self.aimEndTime = os.clock() + self.aimDuration
+
+	self.rangedContext = {
+		aimDirection = Vector3.zero,
+		targetModel = target.Model,
+		lastKnownPosition = target.Root.Position,
+	}
+
 	self:ChangeState("Aim")
-
-	print("[AIM] Début de la visée")
-
 	return Status.RUNNING
 end
 
@@ -564,7 +586,7 @@ function Hunter:RefillMunitions()
 	self.ammoReserve -= take
 
 	self:ChangeState("Idle")
-	print(string.format("[REFILL] réserve=%d | chargeur=%d/%d",
+	Debug.Print(string.format("[REFILL] réserve=%d | chargeur=%d/%d",
 		self.ammoReserve, self.ammoInMag, self.magSize
 	))
 
@@ -575,3 +597,20 @@ end
 
 
 return Hunter
+
+--[[
+animation bug
+
+Faire un idle ou il regarde autour de lui 
+Et le faire quand il attend en patrouille ou qu'il atteint une position 
+
+Ajouter une barre de fatigue pour qu'il court ou marche en fonction de sa fatigue 
+
+Ajout indicateur au dessus de sa tête exemple (! trouve une cible, ? regarde autour de lui)
+
+
+Ajout son pas, tire, reload
+
+Si proche du joueur ne marche plus
+Attaque pied bug
+]]

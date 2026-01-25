@@ -22,7 +22,8 @@ function InRange:Run(chasseur, blackboard)
     if type ~= "Target" then return Status.FAILURE end
 	if not target then return Status.FAILURE end
 
-	local distance = (chasseur.Root.Position - target.Root.Position).Magnitude
+    local distance = (Vector3.new(chasseur.Root.Position.X, 0, chasseur.Root.Position.Z) - 
+                      Vector3.new(target.Root.Position.X, 0, target.Root.Position.Z)).Magnitude
 	return (distance >= self.distanceMin and distance <= self.distanceMax)
 		and Status.SUCCESS or Status.FAILURE
 end

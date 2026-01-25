@@ -7,6 +7,7 @@ local Node = game.ServerScriptService:WaitForChild("BehaviourTree"):WaitForChild
 local Selector = require(Node.Utiles.Selector)
 local WeightedSelector = require(Node.Utiles.WeightedSelector)
 local Sequence = require(Node.Utiles.Sequence)
+local MemorySequence = require(Node.Utiles.MemorySequence)
 
 local FollowTarget = require(Node.ActionNode.FollowTarget)
 local Patrol = require(Node.ActionNode.Patrol)
@@ -36,7 +37,7 @@ local BT = Selector.new({
 	-- =========================
 	-- COMBAT (prioritaire)
 	-- =========================
-	Sequence.new({
+	MemorySequence.new({
 		HasTarget.new(), -- condition basée sur le blackboard
 		
 		Selector.new({
@@ -48,8 +49,8 @@ local BT = Selector.new({
 			}),
 
 			-- ranged combat
-			Sequence.new({
-				InRange.new(8, 50),
+			MemorySequence.new({
+				InRange.new(8, 80),
 				RangedAttack.new(),
 			}),
 
@@ -57,7 +58,7 @@ local BT = Selector.new({
 			FollowTarget.new(),
 		}),
 	}),
-
+	
     Sequence.new({
         HasLastSeenPosition.new(), -- condition basée sur le blackboard
         
@@ -84,7 +85,7 @@ local BT = Selector.new({
 })
 
 
-local PerceptionVision = DetectionVision.new(100)
+local PerceptionVision = DetectionVision.new(150)
 local function PerceptionUpdate(hunter)
     PerceptionVision:Run(hunter, blackboard)
 end
