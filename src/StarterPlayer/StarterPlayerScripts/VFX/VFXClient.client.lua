@@ -6,6 +6,7 @@ local VFXManager = require(script.Parent:WaitForChild("VFXManager"))
 VFXEvent.OnClientEvent:Connect(function(data)
     if data.type == "Shoot" then
         VFXManager:PlayBeam(data.origin, data.hitPosition, 0.15, "Tire")
-        VFXManager:PlayParticle(data.origin, "Smoke", 0.3)
+        VFXManager:EmitParticle(data.origin, "Fire", 1)
+        VFXManager:PlayParticle(data.origin, "Smoke", 0.5)
     end
 end)

@@ -21,7 +21,7 @@ local function UpdateBar()
 end
 
 local rate = 1 -- taux de faim par seconde
-local last = os.clock()
+local last = nil
 --[[
 	Début de la boucle de diminution de la faim
 ]]
@@ -52,6 +52,7 @@ HungerEvent.OnClientEvent:Connect(function(satietyValue)
 	if not start then
 		-- Si pas encore démarré, lance la boucle de diminution de la faim
 		start = true
+		last = os.clock()
 		task.spawn(Start)
 	end
 end)

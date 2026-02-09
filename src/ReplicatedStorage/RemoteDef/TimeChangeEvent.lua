@@ -1,4 +1,4 @@
 return {
-    Name = "CheckGameEvent",
+    Name = "TimeChangeEvent",
     Type = "RemoteEvent",
 }

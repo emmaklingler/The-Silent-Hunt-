@@ -10,7 +10,7 @@ local Sequence = require(Node.Utiles.Sequence)
 local MemorySequence = require(Node.Utiles.MemorySequence)
 
 local FollowTarget = require(Node.ActionNode.FollowTarget)
-local Patrol = require(Node.ActionNode.Patrol)
+local PatrolZone = require(Node.ActionNode.PatrolZone)
 local CloseAttack = require(Node.ActionNode.CloseAttack)
 local RangedAttack = require(Node.ActionNode.RangedAttack)
 local ReloadWeapon = require(Node.ActionNode.ReloadWeapon)
@@ -64,8 +64,8 @@ local BT = Selector.new({
     -- =========================
     Sequence.new({
         HasLastSeenPosition.new(),
-        FollowTarget.new(),
-        MakeTrap.new(6), -- pose un piège quand il est arrivé au lastKnownPosition
+        FollowTarget.new()
+       -- MakeTrap.new(6), -- pose un piège quand il est arrivé au lastKnownPosition
     }),
 
 	-- =========================
@@ -84,20 +84,25 @@ local BT = Selector.new({
 	-- =========================
 	-- PATROUILLE
 	-- =========================
-	Patrol.new(),
+	PatrolZone.new(),
 })
-
 
 local PerceptionVision = DetectionVision.new(150)
 local function PerceptionUpdate(hunter)
 	PerceptionVision:Run(hunter, blackboard)
 end
 
+local connexion = nil
 function HunterBT.Start(hunter)
-	RunService.Heartbeat:Connect(function()
+	connexion = RunService.Heartbeat:Connect(function()
 		PerceptionUpdate(hunter)
 		BT:Run(hunter, blackboard)
 	end)
 end
+
+function HunterBT.Stop()
+	connexion:Disconnect()
+end
+
 
 return HunterBT

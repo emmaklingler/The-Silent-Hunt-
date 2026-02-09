@@ -69,7 +69,26 @@ function VFXManager:PlayParticle(positionOrAttachment, name, lifetime)
     Debris:AddItem(particles, lifetime+particles.Lifetime.Max)
 
     if isTemporary then
-        Debris:AddItem(attachment, lifetime)
+        Debris:AddItem(attachment, lifetime+particles.Lifetime.Max)
+    end
+end
+
+function VFXManager:EmitParticle(positionOrAttachment, name, nb)
+    nb = nb or 3
+
+    local attachment, isTemporary = getAttachment(positionOrAttachment)
+
+    local particles = VFXFolder:WaitForChild(name):Clone()
+    particles.Parent = attachment
+    particles.Enabled = true
+
+    particles:Emit(nb)
+    
+    -- Nettoyage
+    Debris:AddItem(particles, particles.Lifetime.Max)
+
+    if isTemporary then
+        Debris:AddItem(attachment, particles.Lifetime.Max)
     end
 end
 

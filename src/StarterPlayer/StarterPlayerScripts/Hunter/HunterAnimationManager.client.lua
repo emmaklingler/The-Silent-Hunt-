@@ -25,6 +25,8 @@ reloadAnim.AnimationId = "rbxassetid://78142182855689"
 local aimAnim = Instance.new("Animation")                   -- 0s
 aimAnim.AnimationId = "rbxassetid://89488560177926" 
 
+local lookAroundAnim = Instance.new("Animation")            -- 3s
+lookAroundAnim.AnimationId = "rbxassetid://128912682844966" 
 
 
 
@@ -34,6 +36,7 @@ local attackFootTrack = nil
 local shootTrack = nil
 local reloadTrack = nil
 local aimTrack = nil
+local lookAroundTrack = nil
 
 
 ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state: string)
@@ -49,6 +52,7 @@ ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state:
         shootTrack = animator:LoadAnimation(shootAnim)
         reloadTrack = animator:LoadAnimation(reloadAnim)
         aimTrack = animator:LoadAnimation(aimAnim)
+        lookAroundTrack = animator:LoadAnimation(lookAroundAnim)
 
     end
 
@@ -86,5 +90,11 @@ ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state:
         aimTrack:Play()
     else
         aimTrack:Stop()
+    end
+
+    if state == "LookAround" then
+        lookAroundTrack:Play()
+    else
+        lookAroundTrack:Stop()
     end
 end)

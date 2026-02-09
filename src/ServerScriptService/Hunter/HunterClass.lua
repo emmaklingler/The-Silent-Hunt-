@@ -4,11 +4,13 @@ Hunter.__index = Hunter
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PathfindingService = game:GetService("PathfindingService")
-local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
 local ServerStorage = game:GetService("ServerStorage")
+
+local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
 
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
 local Debug = require(game.ServerScriptService.Game.Debug)
+local SoundManager = require(game.ServerScriptService.Sound.SoundManager)
 
 --[[
     Classe Hunter: gère le comportement et les actions d'un chasseur dans le jeu.
@@ -31,7 +33,7 @@ function Hunter.new(model: Model)
 	-- =============================
 	-- Paramètres d'attaque à distance
 	-- =============================
-	self.rangedAttackDamage = 15
+	self.rangedAttackDamage = 25
 
 	self.rangedRange = 100
 	self.rangedContext = nil
@@ -46,10 +48,10 @@ function Hunter.new(model: Model)
 	-- =============================
 	-- Munitions
 	-- =============================
-	self.magSize = 2
+	self.magSize = 5 -- pour test
 	self.ammoInMag = self.magSize
 
-	self.maxAmmoReserve = 2
+	self.maxAmmoReserve = 3
 	self.ammoReserve = self.maxAmmoReserve
 
 	-- =============================
@@ -121,7 +123,7 @@ function Hunter:ComputePath(targetPosition)
         AgentRadius = 8,
         AgentHeight = 25,
         AgentCanJump = false,
-		WaypointSpacing = 6, 
+		WaypointSpacing = 8, 
 		Costs = {
 			Danger = math.huge,
 		}
@@ -248,50 +250,51 @@ end
 
 
 
---[[
-    Déplace le chasseur vers une position cible
-    @param targetPosition: Vector3 - la position vers laquelle se déplacer
+--[[ 
+	Patrouille dans une zone définie
+	@param center: Vector3 - centre de la zone
+	@param radius: number - rayon de patrouille
 ]]
-function Hunter:Patrol(radius)
+function Hunter:PatrolZone(center, radius)
 	radius = radius or 40
 
-	-- init patrol
+	-- init
 	if not self.patrolState then
 		self.patrolState = {
 			mode = "Waiting",
+			center = center,
 			radius = radius,
 			waitEndTime = os.clock() + math.random(0, 1)
 		}
+
 		self:ChangeState("Idle")
 		return Status.RUNNING
 	end
 
 	---------------------------------------------------
-	-- MODE : WAITING (regarde autour de lui)
+	-- MODE : WAITING
 	---------------------------------------------------
 	if self.patrolState.mode == "Waiting" then
-		-- temps d'attente terminé → nouvelle destination
 		if os.clock() >= self.patrolState.waitEndTime then
 			local offset = Vector3.new(
 				math.random(-radius, radius),
 				0,
 				math.random(-radius, radius)
 			)
-
-			self.patrolState.target = self.Root.Position + offset
+			
+			self.patrolState.target = center + offset -- center
 			self.patrolState.mode = "Moving"
 
 			self:ChangeState("Walk")
 		else
-			-- rester idle
-			self:ChangeState("Idle")
+			self:ChangeState("LookAround")
 		end
 
 		return Status.RUNNING
 	end
 
 	---------------------------------------------------
-	-- MODE : MOVING (pathfinding)
+	-- MODE : MOVING
 	---------------------------------------------------
 	if self.patrolState.mode == "Moving" then
 		local status = self:Follow(self.patrolState.target, 10)
@@ -300,10 +303,11 @@ function Hunter:Patrol(radius)
 		if status == Status.SUCCESS or status == Status.FAILURE then
 			self.patrolState = {
 				mode = "Waiting",
+				center = center,
 				radius = radius,
 				waitEndTime = os.clock() + math.random(2, 5)
 			}
-			self:ChangeState("Idle")
+			self:ChangeState("LookAround")
 		end
 
 		return Status.RUNNING
@@ -311,6 +315,7 @@ function Hunter:Patrol(radius)
 
 	return Status.RUNNING
 end
+
 
 
 --[[
@@ -352,6 +357,7 @@ end
 ]]
 function Hunter:ChangeState(state)
 	if self.state == state then return end
+	Debug.Print("[State] "..self.state .. " -> " .. state)
 	self.state = state
     --envoie au client
     ChangeStateHunterEvent:FireAllClients(self.Model, state)
@@ -401,6 +407,7 @@ function Hunter:TryReloadWeapon()
 	self.reloadEndTime = os.clock() + self.reloadDuration
 
 	self:ChangeState("Reload")
+	SoundManager.playSound(nil, self.Root.Position, SoundManager.SoundId.Reload, 1)
 	Debug.Print(string.format("[RELOAD] Début -> chargeur=%d/%d | réserve=%d (%.1fs)",
 		self.ammoInMag, self.magSize, self.ammoReserve, self.reloadDuration
 	))
@@ -487,6 +494,7 @@ function Hunter:TryRangedAttack(target)
 			end
 
 			self:ChangeState("Shoot")
+			SoundManager.playSound(nil, self.Root.Position, SoundManager.SoundId.Shoot, 3)
 
 			-- effet visuel tir (particule, son, etc.) à ajouter ici
 			ReplicatedStorage.Remote.VFXEvent:FireAllClients({
@@ -638,24 +646,31 @@ function Hunter:TryPlaceTrapAt(position)
 end
 
 
-
-
-
 return Hunter
 
 --[[
-animation bug
-
-Faire un idle ou il regarde autour de lui 
-Et le faire quand il attend en patrouille ou qu'il atteint une position 
-
-Ajouter une barre de fatigue pour qu'il court ou marche en fonction de sa fatigue 
-
-Ajout indicateur au dessus de sa tête exemple (! trouve une cible, ? regarde autour de lui)
-
-
-Ajout son pas, tire, reload
-
-Si proche du joueur ne marche plus
+animation bug, son bug
 Attaque pied bug
+
+Amélioration timout follow, en fonction du temps entre deux points a la place du temps total donc plus petit
+
+- ajout fatigue / stress et autre pour le chasseur
+- erreur de tire en fonction 
+- erreur de vision pareille / Si il hesite affiche ?, si il trouve affiche !
+
+- Arrete de bouger si lapin proche
+- Si lapin proche soit le tue soit l'attaque simplement 
+
+Certaines fois bug reste bloqué sur le dernier waypoint je pense et ensuite change d'état plein de fois d'affiler
+  15:03:48.013  [DEBUG]: [State] Shoot -> Idle SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
+  15:03:48.177  [DEBUG]: [State] Idle -> Walk SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
+
+  15:04:08.960  [DEBUG]: [State] Walk -> Idle SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
+  15:04:08.977  [DEBUG]: [State] Idle -> Walk SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
+  15:04:09.011  [DEBUG]: [State] Walk -> Idle SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
+  15:04:09.028  [DEBUG]: [State] Idle -> Walk SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
+  
+  15:04:11.661  [DEBUG]: [State] Walk -> Idle SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
+  15:04:14.678  [DEBUG]: [State] Idle -> Walk SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
+  15:04:16.278  [DEBUG]: [State] Walk -> Aim SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
 ]]
