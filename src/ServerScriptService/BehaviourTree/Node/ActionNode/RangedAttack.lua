@@ -16,9 +16,9 @@ end
 ]]
 function RangedAttack:Run(chasseur, blackboard)
 	local target, type =  blackboard:GetBestTargetOrPosition()
-    if type ~= "Target" then return Status.FAILURE end
-    if not target then return Status.FAILURE end
     
+    -- On ne vérifie pas si la cible est valide ici, car il peut avoir une cible au début et la perdre en cours d'attaque
+
 	return chasseur:TryRangedAttack(target)
 end
 

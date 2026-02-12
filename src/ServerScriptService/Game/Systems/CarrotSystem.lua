@@ -33,7 +33,7 @@ local function getPosLibre()
 end
 
 -- Variables
-local MaxCarrot = 2
+local MaxCarrot = 8
 local time = 0
 local delay = 1
 local totaleCarrot = 0

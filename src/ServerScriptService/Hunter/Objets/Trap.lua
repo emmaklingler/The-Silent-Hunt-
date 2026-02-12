@@ -2,78 +2,191 @@
 local Trap = {}
 Trap.__index = Trap
 
+local Players = game:GetService("Players")
+local PlayerManager = require(game.ServerScriptService.Player.PlayerManager)
+
 local Workspace = game:GetService("Workspace")
 local ServerStorage = game:GetService("ServerStorage")
 
-local trapTemplate = ServerStorage:WaitForChild("Asset"):WaitForChild("Trap")
+----------------------------------------------------------
+-- Folder monde
+----------------------------------------------------------
+local TrapsFolder = Workspace:FindFirstChild("Traps")
+if not TrapsFolder then
+	TrapsFolder = Instance.new("Folder")
+	TrapsFolder.Name = "Traps"
+	TrapsFolder.Parent = Workspace
+end
 
--- (optionnel) seed pour IDs random
-math.randomseed(os.clock() * 1000000)
+----------------------------------------------------------
+-- Assets
+----------------------------------------------------------
+local TrapFolder = ServerStorage:WaitForChild("Asset"):WaitForChild("Trap")
+local TrapOpenTemplate = TrapFolder:WaitForChild("BearTrap_Open")
+local TrapClosedTemplate = TrapFolder:WaitForChild("BearTrap_Closed")
 
+----------------------------------------------------------
+-- Utils
+----------------------------------------------------------
+local function SetupTrapModel(model)
+	for _, part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Anchored = true          -- 🔒 ne bouge plus
+			part.CanCollide = false
+			part.CanTouch = false
+			part.CanQuery = true         -- pour Overlap
+		end
+	end
+end
+
+
+local function GetRabbitFromHumanoid(humanoid)
+    if not humanoid then return nil end
+
+    local model = humanoid.Parent
+    if not model then return nil end
+
+    local player = Players:GetPlayerFromCharacter(model)
+    if not player then return nil end
+
+    return PlayerManager:GetRabbit(player)
+end
+
+
+function Trap:Trigger(humanoid)
+    if not self.IsActive then return end
+    self.IsActive = false
+
+    local rabbit = GetRabbitFromHumanoid(humanoid)
+
+    if rabbit then
+        rabbit:RemoveHealth(30) -- ajuste les dégâts
+        print("[TRAP] Rabbit touché :", rabbit.Player.Name)
+    else
+        warn("[TRAP] Humanoid touché mais aucun Rabbit trouvé")
+    end
+
+
+-- 🔑 colle le modèle AU SOL, pas au pivot
+local function SnapModelToGround(model, groundPos)
+	local _, size = model:GetBoundingBox()
+	model:PivotTo(CFrame.new(
+		groundPos.X,
+		groundPos.Y + size.Y / 2,
+		groundPos.Z
+	))
+end
+
+----------------------------------------------------------
+-- Constructor
+----------------------------------------------------------
 function Trap.new(hunter, position)
 	local self = setmetatable({}, Trap)
 
 	self.Hunter = hunter
-	self.Position = position
-
-	self.Part = trapTemplate:Clone()
-	self.Part.Position = position
-	self.Part.Parent = Workspace
-
 	self.IsActive = true
 
-	-- ID serveur-safe (pas de GetDebugId)
-	self.Id = string.format("%s_%d_%d",
-		(hunter.Model and hunter.Model.Name) or "Hunter",
-		math.floor(os.clock() * 1000),
-		math.random(1, 1e9)
-	)
+	-- spawn visuel OUVERT
+	self.Model = TrapOpenTemplate:Clone()
+	self.Model.Parent = TrapsFolder
+	SnapModelToGround(self.Model, position)
+	SetupTrapModel(self.Model)
 
-	-- réglages
-	self.boxSize = Vector3.new(6, 4, 6)
-	self.damage = 15
+	-- zone de détection (au-dessus du sol)
+	self.boxSize = Vector3.new(6, 3, 6)
+	self.boxOffset = Vector3.new(0, 1.5, 0)
+
+	------------------------------------------------------
+	-- LOOP DE DÉTECTION (OBLIGATOIRE)
+	------------------------------------------------------
+	task.spawn(function()
+		while self.IsActive and self.Model and self.Model.Parent do
+			self:Check()
+			task.wait(0.15) -- ~7 checks/sec (safe)
+		end
+	end)
 
 	return self
 end
 
+----------------------------------------------------------
+-- Detection
+----------------------------------------------------------
 function Trap:Check()
-	if not self.IsActive or not self.Part or not self.Part.Parent then
-		return false
+	if not self.IsActive or not self.Model or not self.Model.Parent then
+		return
 	end
 
 	local params = OverlapParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { self.Part, self.Hunter.Model }
+	params.FilterDescendantsInstances = {
+		self.Model,
+		self.Hunter and self.Hunter.Model,
+		TrapsFolder
+	}
 
-	local parts = Workspace:GetPartBoundsInBox(self.Part.CFrame, self.boxSize, params)
+	local cf = self.Model:GetPivot() * CFrame.new(self.boxOffset)
 
-	for _, p in ipairs(parts) do
-		local model = p:FindFirstAncestorOfClass("Model")
-		if model then
-			local hum = model:FindFirstChildOfClass("Humanoid")
-			local hrp = model:FindFirstChild("HumanoidRootPart")
+	local parts = Workspace:GetPartBoundsInBox(
+		cf,
+		self.boxSize,
+		params
+	)
 
-			-- ✅ évite de te taper le chasseur lui-même (au cas où)
-			if hum and hrp and model ~= self.Hunter.Model then
-				print("[TRAP] Triggered on:", model.Name, "trapId=", self.Id)
+	for _, part in ipairs(parts) do
+		local model = part:FindFirstAncestorWhichIsA("Model")
+		if model and model ~= self.Hunter.Model then
+			local hum =
+				model:FindFirstChildOfClass("Humanoid")
+				or model:FindFirstChild("Humanoid", true)
 
-				hum:TakeDamage(self.damage)
-				self:Destroy()
-
-				return true
+			if hum and hum.Health > 0 then
+				self:Trigger(hum)
+				return
 			end
 		end
 	end
-
-	return false
 end
 
-function Trap:Destroy()
+----------------------------------------------------------
+-- Trigger
+----------------------------------------------------------
+function Trap:Trigger(humanoid)
+	if not self.IsActive then return end
 	self.IsActive = false
-	if self.Part and self.Part.Parent then
-		self.Part:Destroy()
+
+	------------------------------------------------------
+	-- DÉGÂTS (50 % HP ACTUELS)
+	------------------------------------------------------
+	humanoid:TakeDamage(humanoid.Health * 0.5)
+
+	------------------------------------------------------
+	-- Visuel FERMÉ
+	------------------------------------------------------
+	local closed = TrapClosedTemplate:Clone()
+	closed.Parent = TrapsFolder
+	closed:PivotTo(self.Model:GetPivot())
+	SetupTrapModel(closed)
+
+	self.Model:Destroy()
+	self.Model = closed
+
+	------------------------------------------------------
+	-- Auto-destruction
+	------------------------------------------------------
+	task.delay(5, function()
+		if self.Model then
+			self.Model:Destroy()
+			self.Model = nil
+		end
+	end)
+
+	------------------------------------------------------
+	-- Rendre le piège au chasseur
+	------------------------------------------------------
+	if self.Hunter and self.Hunter.RecoverTrap then
+		self.Hunter:RecoverTrap()
 	end
-	self.Part = nil
 end
 
 return Trap

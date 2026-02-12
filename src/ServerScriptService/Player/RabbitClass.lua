@@ -6,6 +6,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteFolder = ReplicatedStorage:WaitForChild("Remote")
 local LifeEvent = RemoteFolder:WaitForChild("LifeChangeEvent")
 
+local PlayerSpawn = game.Workspace:FindFirstChild("PlayerSpawn");
+
 function Rabbit.new(player, profile)
     local self = setmetatable({}, Rabbit)
     self.Player = player
@@ -125,7 +127,8 @@ function Rabbit:Spawn()
 	
 	player.Character = character
     
-    local spawnPoint = workspace.SpawnLocation
+    --Ajout random
+    local spawnPoint = PlayerSpawn:GetChildren()[math.random(1, #PlayerSpawn:GetChildren())]
     character:PivotTo(spawnPoint.CFrame+Vector3.new(0, 5, 0))
     
     -- Mettre à jour les références
@@ -137,5 +140,7 @@ function Rabbit:Spawn()
     self.Stress = 0
 
 end
+
+
 
 return Rabbit

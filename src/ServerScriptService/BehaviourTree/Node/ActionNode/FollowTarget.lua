@@ -22,6 +22,10 @@ function FollowTarget:Run(chasseur, blackboard)
 		pos = target
 	elseif type == "Target" then
 		pos = target.Root.Position
+		local direction = (pos - chasseur.Root.Position).Unit
+		local distance = 5
+		-- recule de 5 studs pour ne pas coller la cible
+		pos -= direction * distance
 	end
 	if not pos then return Status.FAILURE end
 	

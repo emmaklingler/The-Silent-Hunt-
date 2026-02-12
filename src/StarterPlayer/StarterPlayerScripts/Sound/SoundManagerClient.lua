@@ -10,6 +10,9 @@ function SoundManager.playSound(player, position, soundId, volume)
     sound.PlayOnRemove = true
     sound.Looped = false
 
+    sound.RollOffMode = Enum.RollOffMode.Linear
+    sound.MaxDistance = 200
+
     --Ajoute du random au son pour pas que ce soit toujours pareil
     local effect = Instance.new("PitchShiftSoundEffect")
     effect.Octave = 1 + math.random(-1, 1) * 0.1
@@ -31,7 +34,6 @@ function SoundManager.playSound(player, position, soundId, volume)
         part.Parent = workspace
 
         sound.Parent = part
-
         sound:Play()
         Debris:AddItem(part, sound.TimeLength)
     end

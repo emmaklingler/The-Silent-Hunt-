@@ -7,9 +7,10 @@ local Node = game.ServerScriptService:WaitForChild("BehaviourTree"):WaitForChild
 local Selector = require(Node.Utiles.Selector)
 local WeightedSelector = require(Node.Utiles.WeightedSelector)
 local Sequence = require(Node.Utiles.Sequence)
+local MemorySequence = require(Node.Utiles.MemorySequence)
 
 local FollowTarget = require(Node.ActionNode.FollowTarget)
-local Patrol = require(Node.ActionNode.Patrol)
+local PatrolZone = require(Node.ActionNode.PatrolZone)
 local CloseAttack = require(Node.ActionNode.CloseAttack)
 local RangedAttack = require(Node.ActionNode.RangedAttack)
 local ReloadWeapon = require(Node.ActionNode.ReloadWeapon)
@@ -30,72 +31,98 @@ local Blackboard = require(Node.Utiles.Blackboard)
 local blackboard = Blackboard.new()
 
 -- Définition de l'arbre de comportement du chasseur
+-- local BT = Selector.new({
+
+-- 	-- =========================
+-- 	-- COMBAT (prioritaire)
+-- 	-- =========================
+-- 	MemorySequence.new({
+-- 		HasTarget.new(), -- condition basée sur le blackboard
+		
+-- 		Selector.new({
+
+-- 			-- close combat
+-- 			Sequence.new({
+-- 				InRange.new(0, 8),
+-- 				CloseAttack.new(),
+-- 			}),
+
+-- 			-- ranged combat
+-- 			MemorySequence.new({
+-- 				InRange.new(8, 80),
+-- 				RangedAttack.new(),
+-- 			}),
+
+
+-- 			-- sinon → follow
+-- 			FollowTarget.new(),
+-- 		}),
+-- 	}),
+
+-- 	-- =========================
+--     -- SUIVRE DERNIÈRE POSITION
+--     -- =========================
+--     Sequence.new({
+--         HasLastSeenPosition.new(),
+--         FollowTarget.new()
+--        	MakeTrap.new(6), -- pose un piège à la dernière position vue si on est proche (ex: pour couvrir une fuite)
+--     }),
+
+-- 	-- =========================
+-- 	-- SURVIE / LOGISTIQUE
+-- 	-- =========================
+-- 	Sequence.new({
+-- 		NeedsReload.new(),
+-- 		ReloadWeapon.new(),
+-- 	}),
+
+-- 	Sequence.new({
+-- 		NeedsMunitions.new(),
+-- 		GetMunitions.new(),
+-- 	}),
+
+-- 	-- =========================
+-- 	-- PATROUILLE
+-- 	-- =========================
+-- 	PatrolZone.new(),
+-- })
+
 local BT = Selector.new({
 
-	-- =========================
-	-- COMBAT (prioritaire)
-	-- =========================
+	-- 1️⃣ Si la cible est encore visible → on la suit (pas de piège)
 	Sequence.new({
 		HasTarget.new(),
-		
-		Selector.new({
-
-			-- close combat
-			Sequence.new({
-				InRange.new(0, 8),
-				CloseAttack.new(),
-			}),
-
-			-- ranged combat
-			Sequence.new({
-				InRange.new(8, 50),
-				RangedAttack.new(),
-			}),
-
-
-			-- sinon → follow
-			FollowTarget.new(),
-		}),
+		FollowTarget.new(),
 	}),
 
-	-- =========================
-    -- SUIVRE DERNIÈRE POSITION
-    -- =========================
-    Sequence.new({
-        HasLastSeenPosition.new(),
-        FollowTarget.new(),
-        MakeTrap.new(6), -- pose un piège quand il est arrivé au lastKnownPosition
-    }),
+	-- 2️⃣ Si la cible est PERDUE mais mémorisée
+	MemorySequence.new({
+		HasLastSeenPosition.new(),
 
-	-- =========================
-	-- SURVIE / LOGISTIQUE
-	-- =========================
-	Sequence.new({
-		NeedsReload.new(),
-		ReloadWeapon.new(),
+		-- va à la dernière position connue
+		FollowTarget.new(),
+
+		-- pose UN piège (grâce au flag blackboard)
+		MakeTrap.new(12),
 	}),
-
-	Sequence.new({
-		NeedsMunitions.new(),
-		GetMunitions.new(),
-	}),
-
-	-- =========================
-	-- PATROUILLE
-	-- =========================
-	Patrol.new(),
 })
 
-local PerceptionVision = DetectionVision.new(100)
+local PerceptionVision = DetectionVision.new(150)
 local function PerceptionUpdate(hunter)
 	PerceptionVision:Run(hunter, blackboard)
 end
 
+local connexion = nil
 function HunterBT.Start(hunter)
-	RunService.Heartbeat:Connect(function()
+	connexion = RunService.Heartbeat:Connect(function()
 		PerceptionUpdate(hunter)
 		BT:Run(hunter, blackboard)
 	end)
 end
+
+function HunterBT.Stop()
+	connexion:Disconnect()
+end
+
 
 return HunterBT

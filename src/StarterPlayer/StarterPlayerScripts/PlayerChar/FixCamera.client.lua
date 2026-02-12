@@ -1,9 +1,10 @@
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
 -- Verrouille la caméra en vue première personne
---player.CameraMode = Enum.CameraMode.LockFirstPerson
 
 -- Change la cible de la caméra au respawn
 player.CharacterAdded:Connect(function(character)
@@ -19,14 +20,19 @@ player:GetPropertyChangedSignal("CameraMode"):Connect(function()
 	end
 end)
 
---[[
-Désactive la souris ou non : 
+
 -- Activer FPS
 local function EnableFPSMouse()
+    player.CameraMode = Enum.CameraMode.LockFirstPerson
     UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
     UserInputService.MouseIconEnabled = false
 end
 
+
+--task.delay(5, EnableFPSMouse)
+
+
+--[[
 -- Désactiver FPS (menu, pause, etc)
 local function DisableFPSMouse()
     UserInputService.MouseBehavior = Enum.MouseBehavior.Default
