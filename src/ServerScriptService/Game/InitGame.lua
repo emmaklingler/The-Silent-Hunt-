@@ -56,11 +56,10 @@ function GameManager:StartGame(teleportData)
 
     HunterBT.Start(Hunter) 
 
-    print("Game Started")
     StartEvent:FireAllClients(teleportData)
     return true
 end
-
+    
 --[[
     Termine la partie -> Envoie les joueur dans un menu pour qu'il quit
 ]]

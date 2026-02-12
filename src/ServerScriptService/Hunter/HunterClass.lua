@@ -7,6 +7,7 @@ local PathfindingService = game:GetService("PathfindingService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
+local ChangeActionEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeActionEvent")
 
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
 local Debug = require(game.ServerScriptService.Game.Debug)
@@ -48,10 +49,10 @@ function Hunter.new(model: Model)
 	-- =============================
 	-- Munitions
 	-- =============================
-	self.magSize = 5 -- pour test
+	self.magSize = 2 -- pour test
 	self.ammoInMag = self.magSize
 
-	self.maxAmmoReserve = 3
+	self.maxAmmoReserve = 1
 	self.ammoReserve = self.maxAmmoReserve
 
 	-- =============================
@@ -93,9 +94,31 @@ function Hunter.new(model: Model)
 	self.trapsStockMax = 5
 	self.trapsStock = self.trapsStockMax
 
+	self.poidStat = {
+		fatigue = 0.5,
+		patience = 0.5,
+		aggressivite = 0.5,	
+		balleChargeur = 1,
+		balleReserve = 1,
+	}
+	self:ChangePoidStat("balleChargeur")
+	self:ChangePoidStat("balleReserve")
 
 
 	return self
+end
+
+
+function Hunter:ChangePoidStat(stat, val)
+	if stat == "balleChargeur" then
+		self.poidStat.balleChargeur = math.clamp((self.ammoInMag or 0) / (self.magSize or 1), 0, 1)
+	elseif stat == "balleReserve" then
+		self.poidStat.balleReserve = math.clamp((self.ammoReserve or 0) / (self.maxAmmoReserve or 1), 0, 1)
+	else
+		if not self.poidStat[stat] then return end
+		self.poidStat[stat] = math.clamp(self.poidStat[stat] + val, 0, 1)
+	end
+	ChangeActionEvent:FireAllClients(self.poidStat)
 end
 
 --[[
@@ -191,13 +214,15 @@ function Hunter:Follow(position, timeout)
 		--Pour DEBUG
 		folder:ClearAllChildren()
 		for _, waypoint in pairs(waypoints) do
-			local part = Instance.new("Part")
-			part.Size = Vector3.new(1,1,1)
-			part.Parent = folder
-			part.Position = waypoint.Position + Vector3.new(0,2,0)
-			part.Anchored = true	
-			part.CanCollide = false
-			part.BrickColor = BrickColor.new("Bright yellow")
+			if game:GetService("RunService"):IsStudio() then
+				local part = Instance.new("Part")
+				part.Size = Vector3.new(1,1,1)
+				part.Parent = folder
+				part.Position = waypoint.Position + Vector3.new(0,2,0)
+				part.Anchored = true	
+				part.CanCollide = false
+				part.BrickColor = BrickColor.new("Bright yellow")
+			end
 		end
 
         self.pathState = {
@@ -210,6 +235,8 @@ function Hunter:Follow(position, timeout)
 
         self:ChangeState("Walk")
         self.Humanoid:MoveTo(waypoints[GetFirstValidWaypoint(self.Root, waypoints)].Position)
+		self:ChangePoidStat("fatigue", 0)
+		self:ChangePoidStat("patience", 0)
         return Status.RUNNING
     end
 
@@ -267,6 +294,9 @@ function Hunter:PatrolZone(center, radius)
 			waitEndTime = os.clock() + math.random(0, 1)
 		}
 
+		self:ChangePoidStat("fatigue", -0)
+		self:ChangePoidStat("patience", 0)
+		self:ChangePoidStat("aggressivite", -0)
 		self:ChangeState("Idle")
 		return Status.RUNNING
 	end
@@ -344,6 +374,11 @@ function Hunter:TryAttackClose(target)
 	self.nextAttackTime = os.clock() + self.attackCooldown
 
 	self:ChangeState("AttackPied")
+
+	self:ChangePoidStat("fatigue", 0)
+	self:ChangePoidStat("patience", -0)
+	self:ChangePoidStat("aggressivite", 0)
+
 	target:RemoveHealth(self.closeAttackDamage)
 
 	return Status.RUNNING
@@ -382,11 +417,13 @@ function Hunter:TryReloadWeapon()
 			self.ammoInMag += take
 			self.ammoReserve -= take
 
+			self:ChangePoidStat("fatigue", -0)
+			self:ChangePoidStat("patience", 0)
+			self:ChangePoidStat("aggressivite", -0)
+			self:ChangePoidStat("balleChargeur")
+			self:ChangePoidStat("balleReserve")
+			
 			self:ChangeState("Idle")
-			Debug.Print(string.format("[RELOAD] Terminé -> chargeur=%d/%d | réserve=%d",
-				self.ammoInMag, self.magSize, self.ammoReserve
-			))
-
 			return Status.SUCCESS
 		end
 
@@ -395,9 +432,6 @@ function Hunter:TryReloadWeapon()
 
 	-- Conditions pour démarrer
 	if not self:CanReload() then
-		Debug.Print(string.format("[RELOAD] Impossible -> chargeur=%d/%d | réserve=%d",
-			self.ammoInMag, self.magSize, self.ammoReserve
-		))
 		return Status.FAILURE
 	end
 
@@ -408,6 +442,8 @@ function Hunter:TryReloadWeapon()
 
 	self:ChangeState("Reload")
 	SoundManager.playSound(nil, self.Root.Position, SoundManager.SoundId.Reload, 1)
+
+
 	Debug.Print(string.format("[RELOAD] Début -> chargeur=%d/%d | réserve=%d (%.1fs)",
 		self.ammoInMag, self.magSize, self.ammoReserve, self.reloadDuration
 	))
@@ -494,6 +530,12 @@ function Hunter:TryRangedAttack(target)
 			end
 
 			self:ChangeState("Shoot")
+
+			self:ChangePoidStat("fatigue", 0)
+			self:ChangePoidStat("patience", -0)
+			self:ChangePoidStat("aggressivite", 0)
+			self:ChangePoidStat("balleChargeur")
+		
 			SoundManager.playSound(nil, self.Root.Position, SoundManager.SoundId.Shoot, 3)
 
 			-- effet visuel tir (particule, son, etc.) à ajouter ici
@@ -583,6 +625,7 @@ end
 	@return boolean - true si le chasseur peut recharger, false sinon
 ]]
 function Hunter:CanReload()
+	print("Ammo in mag:", self.ammoInMag, "Ammo reserve:", self.ammoReserve)
 	return (self.ammoReserve or 0) > 0 and (self.ammoInMag or 0) < (self.magSize or 0)
 end
 
@@ -597,14 +640,16 @@ function Hunter:RefillMunitions()
 
 	-- Remplit la réserve
 	self.ammoReserve = self.maxAmmoReserve
-
-	-- recharge direct le chargeur
-	local missing = self.magSize - self.ammoInMag
-	local take = math.min(missing, self.ammoReserve)
-	self.ammoInMag += take
-	self.ammoReserve -= take
+	self.ammoInMag += self.magSize
 
 	self:ChangeState("Idle")
+
+	self:ChangePoidStat("fatigue", -0)
+	self:ChangePoidStat("patience", 0)
+	self:ChangePoidStat("aggressivite", -0)
+	self:ChangePoidStat("balleChargeur")
+	self:ChangePoidStat("balleReserve")
+
 	Debug.Print(string.format("[REFILL] réserve=%d | chargeur=%d/%d",
 		self.ammoReserve, self.ammoInMag, self.magSize
 	))
@@ -649,28 +694,6 @@ end
 return Hunter
 
 --[[
-animation bug, son bug
-Attaque pied bug
+Amélioration timout lastPosition
 
-Amélioration timout follow, en fonction du temps entre deux points a la place du temps total donc plus petit
-
-- ajout fatigue / stress et autre pour le chasseur
-- erreur de tire en fonction 
-- erreur de vision pareille / Si il hesite affiche ?, si il trouve affiche !
-
-- Arrete de bouger si lapin proche
-- Si lapin proche soit le tue soit l'attaque simplement 
-
-Certaines fois bug reste bloqué sur le dernier waypoint je pense et ensuite change d'état plein de fois d'affiler
-  15:03:48.013  [DEBUG]: [State] Shoot -> Idle SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
-  15:03:48.177  [DEBUG]: [State] Idle -> Walk SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
-
-  15:04:08.960  [DEBUG]: [State] Walk -> Idle SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
-  15:04:08.977  [DEBUG]: [State] Idle -> Walk SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
-  15:04:09.011  [DEBUG]: [State] Walk -> Idle SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
-  15:04:09.028  [DEBUG]: [State] Idle -> Walk SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
-  
-  15:04:11.661  [DEBUG]: [State] Walk -> Idle SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
-  15:04:14.678  [DEBUG]: [State] Idle -> Walk SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
-  15:04:16.278  [DEBUG]: [State] Walk -> Aim SRC : ServerScriptService.Hunter.HunterClass  -  Server - Debug:9
 ]]

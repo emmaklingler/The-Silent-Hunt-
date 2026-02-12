@@ -1,6 +1,6 @@
 local Debug = {}
 
-local debugMode = true
+local debugMode = false
 
 function Debug.Print(message: string)
     if not debugMode then

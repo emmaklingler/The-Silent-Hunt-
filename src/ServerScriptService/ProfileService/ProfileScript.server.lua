@@ -20,8 +20,8 @@ local ProfileStore = ProfileService.GetProfileStore(
 local template = nil
 local nbPlayers = 0
 
-local GRACE_DELAY = 5
-local FINAL_COUNTDOWN = 15
+local GRACE_DELAY = 2
+local FINAL_COUNTDOWN = 5
 
 local graceTask = nil
 local countdownTask = nil
@@ -72,7 +72,7 @@ PlayerReadyEvent.OnServerEvent:Connect(function()
 
 	-- Tous les joueurs sont là → start immédiat
 	if nbPlayers >= template.nbPlayers then
-		task.wait(5)
+		task.wait(3)
 		CancelTimers()
 		InitGame:StartGame(template)
 		return
@@ -84,15 +84,13 @@ end)
 
 local function DoSomethingWithALoadedProfile(player, profile)
 	if InitGame.State ~= "Lobby" then
-		-- Si la game a déjà commencé, on kick le joueur
+		-- Si la game a déjà commencé, on  kick le joueur
 		player:Kick("Game already in progress")
 		return
 	end
 	profile.Data = ProfileTemplate --Pour reset les données
 	--print(profile.Data)
 	local joinData = player:GetJoinData()
-	print(tostring(joinData))
-	print(joinData)
     local teleportData = joinData.TeleportData
 	if teleportData then
 		print("TeleportData found:", teleportData)
@@ -108,7 +106,6 @@ local function DoSomethingWithALoadedProfile(player, profile)
 		template = teleportData
 	end
 	profile.Data.LogInTimes += 1
-
 	PlayerManager:CreateRabbit(player, profile)
 end  
 

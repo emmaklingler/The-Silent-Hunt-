@@ -1,100 +1,82 @@
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ContentProvider = game:GetService("ContentProvider")
+
 local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
 
 local model = nil
+local tracks = {}
+local currentState = nil
 
-local idleAnim = Instance.new("Animation")                  -- 0.8s
-idleAnim.AnimationId = "rbxassetid://105394594977781"   
+-- Table propre des animations
+local animationsData = {
+	Idle = "rbxassetid://105394594977781",
+	Walk = "rbxassetid://96270962614028",
+	Run = "rbxassetid://97087449242424",
+	AttackPied = "rbxassetid://118974947207883",
+	Shoot = "rbxassetid://130777871148436",
+	Reload = "rbxassetid://78142182855689",
+	Aim = "rbxassetid://89488560177926",
+	LookAround = "rbxassetid://128912682844966",
+	PlaceTrap = "rbxassetid://135010872973319",
+}
 
-local attackFootAnim = Instance.new("Animation")            -- 0.5s
-attackFootAnim.AnimationId = "rbxassetid://118974947207883"     
+local animations = {}
 
-local walkAnim = Instance.new("Animation")                  -- 0.8s
-walkAnim.AnimationId = "rbxassetid://96270962614028" 
+-- Création des objets Animation
+for state, id in animationsData do
+	local anim = Instance.new("Animation")
+	anim.AnimationId = id
+	animations[state] = anim
+end
 
-local runAnim = Instance.new("Animation")                   -- 0.8s
-runAnim.AnimationId = "rbxassetid://97087449242424" 
+-- Preload des animations
+ContentProvider:PreloadAsync(
+	(function()
+		local list = {}
+		for _, anim in animations do
+			table.insert(list, anim)
+		end
+		return list
+	end)()
+)
 
-local shootAnim = Instance.new("Animation")                 -- 0.5s
-shootAnim.AnimationId = "rbxassetid://130777871148436" 
-
-local reloadAnim = Instance.new("Animation")                -- 2s
-reloadAnim.AnimationId = "rbxassetid://78142182855689" 
-
-local aimAnim = Instance.new("Animation")                   -- 0s
-aimAnim.AnimationId = "rbxassetid://89488560177926" 
-
-local lookAroundAnim = Instance.new("Animation")            -- 3s
-lookAroundAnim.AnimationId = "rbxassetid://128912682844966" 
-
-
-
-local idleTrack = nil
-local walkTrack = nil
-local attackFootTrack = nil
-local shootTrack = nil
-local reloadTrack = nil
-local aimTrack = nil
-local lookAroundTrack = nil
-
+local function stopAllAnimations()
+	for _, track in tracks do
+		if track.IsPlaying then
+			track:Stop()
+		end
+	end
+end
 
 ChangeStateHunterEvent.OnClientEvent:Connect(function(hunterModel: Model, state: string)
 
-    if hunterModel ~= model then
-        model = hunterModel
-        local humanoid = model:WaitForChild("Humanoid")
-        local animator = humanoid:WaitForChild("Animator")  
+	-- Si on change de modèle, on recharge les tracks
+	if hunterModel ~= model then
+		model = hunterModel
+		tracks = {}
 
-        idleTrack = animator:LoadAnimation(idleAnim)
-        walkTrack = animator:LoadAnimation(walkAnim)
-        attackFootTrack = animator:LoadAnimation(attackFootAnim)
-        shootTrack = animator:LoadAnimation(shootAnim)
-        reloadTrack = animator:LoadAnimation(reloadAnim)
-        aimTrack = animator:LoadAnimation(aimAnim)
-        lookAroundTrack = animator:LoadAnimation(lookAroundAnim)
+		local humanoid = model:WaitForChild("Humanoid")
+		local animator = humanoid:WaitForChild("Animator")
 
-    end
+		-- Charger toutes les animations d'un coup
+		for animState, anim in pairs(animations) do
+			tracks[animState] = animator:LoadAnimation(anim)
+		end
+	end
 
-    if state == "Idle" then
-        idleTrack:Play()
-    else
-        idleTrack:Stop()
-    end
+	-- Si l'état est identique, on ne fait rien
+	if currentState == state then
+		return
+	end
 
-    if state == "Walk" then
-        walkTrack:Play()
-    else
-        walkTrack:Stop()
-    end
+	currentState = state
 
-    if state == "AttackPied" then
-        attackFootTrack:Play()
-    else
-        attackFootTrack:Stop()
-    end
+	stopAllAnimations()
 
-    if state == "Shoot" then
-        shootTrack:Play()
-    else
-        shootTrack:Stop()
-    end
-
-    if state == "Reload" then
-        reloadTrack:Play()
-    else
-        reloadTrack:Stop()
-    end
-
-    if state == "Aim" then
-        aimTrack:Play()
-    else
-        aimTrack:Stop()
-    end
-
-    if state == "LookAround" then
-        lookAroundTrack:Play()
-    else
-        lookAroundTrack:Stop()
-    end
+	local track = tracks[state]
+	if track then
+		track:Play()
+	else
+		warn("Animation state inconnu :", state)
+	end
 end)

@@ -136,6 +136,7 @@ function Rabbit:Spawn()
     self.Humanoid = character:WaitForChild("Humanoid")
     self.Root = character:WaitForChild("HumanoidRootPart")
     self.Health = 100
+    self.MaxHealth = 100
     self.Satiety = 100
     self.Stress = 0
 
