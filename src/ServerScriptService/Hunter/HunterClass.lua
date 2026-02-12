@@ -5,6 +5,7 @@ local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PathfindingService = game:GetService("PathfindingService")
 local ServerStorage = game:GetService("ServerStorage")
+local Trap = require(script.Parent:WaitForChild("Objets"):WaitForChild("Trap"))
 
 local ChangeStateHunterEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateHunterEvent")
 local ChangeActionEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeActionEvent")
@@ -656,37 +657,67 @@ function Hunter:RefillMunitions()
 
 	return true
 end
-
---===========================================================
--- Méthodes spécifiques à la creation de piège 
---===========================================================
-local Trap = require(script.Parent.Objets.Trap)
-
-
 function Hunter:TryPlaceTrapAt(position)
 	if not self.Root or not position then return false end
 
+	-- cooldown
 	self._nextTrapTime = self._nextTrapTime or 0
 	if os.clock() < self._nextTrapTime then return false end
 	self._nextTrapTime = os.clock() + 2
 
+	-- stock
 	if (self.trapsStock or 0) <= 0 then return false end
 
+	self.ActiveTraps = self.ActiveTraps or {}
+
+	--------------------------------------------------------
+	-- Projection au sol
+	--------------------------------------------------------
 	local rayParams = RaycastParams.new()
 	rayParams.FilterType = Enum.RaycastFilterType.Exclude
-	rayParams.FilterDescendantsInstances = { self.Model }
+	rayParams.FilterDescendantsInstances = {
+		self.Model,
+		workspace:FindFirstChild("Traps")
+	}
 
-	local origin = position + Vector3.new(0, 10, 0)
-	local result = workspace:Raycast(origin, Vector3.new(0, -80, 0), rayParams)
-	if result then position = result.Position end
+	local origin = position + Vector3.new(0, 50, 0)
+	local result = workspace:Raycast(origin, Vector3.new(0, -200, 0), rayParams)
 
+	if not result then return false end
+	if result.Normal.Y < 0.85 then return false end
+
+	local drop = origin.Y - result.Position.Y
+	if drop > 140 then return false end
+
+	position = result.Position
+
+	--------------------------------------------------------
+	-- Pas deux pièges trop proches (XZ)
+	--------------------------------------------------------
+	local MIN_DIST = 14
+	local pos2D = Vector3.new(position.X, 0, position.Z)
+
+	for i = #self.ActiveTraps, 1, -1 do
+		local trap = self.ActiveTraps[i]
+		if not trap or not trap.Model or not trap.Model.Parent then
+			table.remove(self.ActiveTraps, i)
+		else
+			local tpos = trap.Model:GetPivot().Position
+			local tpos2D = Vector3.new(tpos.X, 0, tpos.Z)
+			if (tpos2D - pos2D).Magnitude < MIN_DIST then
+				return false
+			end
+		end
+	end
+
+	--------------------------------------------------------
+	-- Création
+	--------------------------------------------------------
 	local trap = Trap.new(self, position)
 
 	self.trapsStock -= 1
-	self.ActiveTraps = self.ActiveTraps or {}
 	table.insert(self.ActiveTraps, trap)
 
-	print(string.format("[TRAP] posé à lastKnown | stock=%d/%d", self.trapsStock, self.trapsStockMax))
 	return true
 end
 
