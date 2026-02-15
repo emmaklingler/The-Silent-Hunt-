@@ -5,10 +5,6 @@ Gameplay & IA
 - limite de pièges posables
 - dégâts infligés au lapin
 - récupération du piège par le chasseur
-- Terrier central :
-- réseau d’entrées réparties sur la carte
-- augmentation de la faim du lapin lorsqu’il est à l’intérieur
-- sortie libre par n’importe quelle entrée
 - Début du système d’Utility AI :
 - identification des actions et attributs du chasseur
 - création des formules d’utility
@@ -30,11 +26,9 @@ CU1 - Le chasseur pose un piège
 → Le piège est actif et pourra être déclenché par un lapin.
 CU2 - Le lapin déclenche un piège
 → Le lapin perd de la vie et le chasseur récupère un piège.
-CU3 - Le lapin entre dans le terrier
-→ Sa faim augmente et il peut ressortir par n’importe quelle entrée.
-CU4 - Le chasseur évalue ses actions via l’Utility AI
+CU3 - Le chasseur évalue ses actions via l’Utility AI
 → Les poids dynamiques influencent ses priorités (tir, poursuite, piège, recharge…).
-CU5 - Un joueur rejoint le lobby
+CU4 - Un joueur rejoint le lobby
 → Il peut créer ou rejoindre un groupe, puis être transféré vers la partie.
 
 3) Rôle des membres du groupe
@@ -47,10 +41,5 @@ Hugo :
 - Intégration des attributs et premières calibrations
 - Ajouts graphiques (modèle, animations, ambiance)
 Noah :
-- Travail interrompu pour raisons médicales (pas de contribution sur cette itération)
-
-Conclusion
-L’itération 3 a permis d’introduire des systèmes majeurs (pièges, terrier, Utility AI) tout en renforçant l’aspect visuel et multijoueur du jeu.
-Même si l’Utility AI n’a pas pu être calibrée comme prévu, les fondations sont posées et une version jouable a été obtenue grâce à des ajustements pragmatiques.
-L’équipe a identifié une erreur de stratégie : vouloir tout implémenter d’un coup a créé une complexité excessive.
-Cette prise de conscience permettra d’aborder l’itération suivante avec une approche plus progressive et maîtrisée.
+- Terrier a moitier terminé
+- Gros travail sur le docs
