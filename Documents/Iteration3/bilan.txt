@@ -3,7 +3,6 @@ Itération III - Bilan
 L’itération 3 marque une avancée importante dans la profondeur du gameplay et dans la sophistication de l’IA du chasseur.
 Plusieurs systèmes majeurs ont été introduits ou améliorés :
 - Les pièges sont désormais pleinement fonctionnels : le chasseur peut en poser un nombre limité, et lorsqu’un lapin déclenche un piège, il subit des dégâts et le chasseur récupère un piège.
-- Le système de terrier est opérationnel : un réseau d’entrées réparties sur la carte permet au lapin d’entrer dans un terrier central, d’y augmenter sa faim, puis de ressortir où il le souhaite.
 - Le système d’Utility AI a été amorcé avec un calcul dynamique des poids pour rendre le chasseur plus réaliste dans ses décisions.
 En parallèle, plusieurs éléments graphiques et systèmes annexes ont été ajoutés entre les itérations 2 et 3 pour rattraper le retard dû à l’absence d’un membre de l’équipe :
 - Nouveau modèle 3D du chasseur
@@ -26,7 +25,6 @@ Faute de temps, certains attributs ont été fixés à des valeurs constantes (f
 Validation des fonctionnalités réalisées
 Les éléments suivants sont validés pour l’itération 3 :
 - Pièges fonctionnels avec récupération après déclenchement
-- Terrier central avec entrées multiples et gestion de la faim du lapin
 - Début du système d’Utility AI (formules, attributs, premières intégrations)
 - Ajouts graphiques : modèle 3D, animations, ambiance
 - Système de lobby multijoueur opérationnel
@@ -34,6 +32,6 @@ Les éléments suivants sont validés pour l’itération 3 :
 Conformité avec l’étude préalable
 L’itération 3 reste conforme à la vision initiale du projet :
 - Le chasseur gagne en réalisme grâce à l’Utility AI, conformément à l’objectif d’une IA adaptative.
-- Les pièges et le terrier enrichissent le gameplay de traque et de survie prévu dès l’étude préalable.
+- Les pièges enrichissent le gameplay de traque et de survie prévu dès l’étude préalable.
 - Les ajouts graphiques et le lobby renforcent la qualité globale du jeu sans dévier de la direction initiale.
 Même si l’Utility AI n’est pas encore totalement calibrée, les fondations sont posées et cohérentes avec l’architecture prévue.
