@@ -1,18 +1,52 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Player = game.Players.LocalPlayer
-local EntrerTerrierEvent = ReplicatedStorage.Remote:WaitForChild("EntrerTerrierEvent")
+local Players = game:GetService("Players")
+local ReplicateStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
 
---[[
-    Gestion de l'événement lorsque le joueur interagit avec la carotte.
-]]
+local EntrerTerrierEvent = ReplicateStorage.Remote:WaitForChild("EntrerTerrierEvent")
 
-local porte_1 = workspace.Terrier.Entre:WaitForChild("Porte_1") 
--- attendre que tout soit bien répliqué
-local prompt = porte_1:WaitForChild("ProximityPrompt")
+--------------------------------------------------
+-- Attendre la structure
+--------------------------------------------------
 
-prompt.Triggered:Connect(function(playerHit)
-    if playerHit == Player then
-        EntrerTerrierEvent:FireServer(porte_1)
-    end
-end)
+local Terrier = workspace:WaitForChild("Terrier")
+local EntreeFolder = Terrier:WaitForChild("Entre")
+local SortieFolder = Terrier:WaitForChild("Sortie")
 
+--------------------------------------------------
+-- Fonction d'initialisation d'une porte
+--------------------------------------------------
+
+local function InitPorte(porteSource, porteDestination)
+
+	local prompt = porteSource:WaitForChild("ProximityPrompt")
+
+	prompt.Triggered:Connect(function(playerHit)
+		if playerHit == player then
+			EntrerTerrierEvent:FireServer(porteDestination)
+		end
+	end)
+end
+
+--------------------------------------------------
+-- Attendre que les portes soient chargées
+--------------------------------------------------
+
+local function WaitForChildren(folder)
+	while #folder:GetChildren() == 0 do
+		folder.ChildAdded:Wait()
+	end
+end
+
+WaitForChildren(EntreeFolder)
+WaitForChildren(SortieFolder)
+
+--------------------------------------------------
+-- Associer les portes
+--------------------------------------------------
+
+for _, porteEntree in EntreeFolder:GetChildren() do
+	
+	local porteSortie = SortieFolder:WaitForChild(porteEntree.Name)
+	InitPorte(porteEntree, porteSortie)
+	InitPorte(porteSortie, porteEntree)
+end
