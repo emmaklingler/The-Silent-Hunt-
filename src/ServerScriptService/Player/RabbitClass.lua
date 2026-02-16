@@ -27,6 +27,8 @@ function Rabbit.new(player, profile)
 
     self.EstCache = false
 
+    self.DansTerrier = false
+
     return self
 end
 
@@ -44,7 +46,9 @@ end
     @param amount: nombre a enlever
 ]]
 function Rabbit:RemoveSatiety(amount)
-    if self.Satiety > 0 then
+    if self.Satiety > 0 and self.DansTerrier == true then
+        self.Satiety -= amount*3
+    elseif self.Satiety > 0 then
         self.Satiety -= amount
         --Si satiety < 0 Meurt
     else
@@ -78,6 +82,9 @@ function Rabbit:SeCacher()
     self.Model["Plane.001"].Transparency = self.EstCache and 1 or 0
     print(self.Player.Name .. " est caché: " .. tostring(self.EstCache))
 end
+
+
+
 
 function Rabbit:DansCachette()
     return self.EstCache
