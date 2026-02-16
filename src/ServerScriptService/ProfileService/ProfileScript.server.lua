@@ -88,14 +88,14 @@ local function DoSomethingWithALoadedProfile(player, profile)
 		player:Kick("Game already in progress")
 		return
 	end
-	profile.Data = ProfileTemplate --Pour reset les données
+	profile.Data = table.clone(ProfileTemplate) --Pour reset les données
 	--print(profile.Data)
 	local joinData = player:GetJoinData()
     local teleportData = joinData.TeleportData
 	if teleportData then
 		print("TeleportData found:", teleportData)
 	else
-		warn("Pas de data")
+		print("pas de data")
 		teleportData = {
 			nbPlayers = 1,
 			nbBots = 0,

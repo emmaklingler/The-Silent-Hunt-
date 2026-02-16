@@ -21,51 +21,21 @@ end
 ----------------------------------------------------------
 -- Assets
 ----------------------------------------------------------
-local TrapFolder = ServerStorage:WaitForChild("Asset"):WaitForChild("Trap")
-local TrapOpenTemplate = TrapFolder:WaitForChild("BearTrap_Open")
-local TrapClosedTemplate = TrapFolder:WaitForChild("BearTrap_Closed")
+local AssetFolder = ServerStorage:WaitForChild("Asset")
+local TrapFolderModel = AssetFolder:WaitForChild("Trap")
 
 ----------------------------------------------------------
 -- Utils
 ----------------------------------------------------------
 local function SetupTrapModel(model)
-	for _, part in ipairs(model:GetDescendants()) do
+	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then
-			part.Anchored = true          -- 🔒 ne bouge plus
+			part.Anchored = true         
 			part.CanCollide = false
 			part.CanTouch = false
-			part.CanQuery = true         -- pour Overlap
 		end
 	end
 end
-
-
-local function GetRabbitFromHumanoid(humanoid)
-    if not humanoid then return nil end
-
-    local model = humanoid.Parent
-    if not model then return nil end
-
-    local player = Players:GetPlayerFromCharacter(model)
-    if not player then return nil end
-
-    return PlayerManager:GetRabbit(player)
-end
-
-
-function Trap:Trigger(humanoid)
-    if not self.IsActive then return end
-    self.IsActive = false
-
-    local rabbit = GetRabbitFromHumanoid(humanoid)
-
-    if rabbit then
-        rabbit:RemoveHealth(30) -- ajuste les dégâts
-        print("[TRAP] Rabbit touché :", rabbit.Player.Name)
-    else
-        warn("[TRAP] Humanoid touché mais aucun Rabbit trouvé")
-    end
-
 
 -- 🔑 colle le modèle AU SOL, pas au pivot
 local function SnapModelToGround(model, groundPos)
@@ -81,13 +51,14 @@ end
 -- Constructor
 ----------------------------------------------------------
 function Trap.new(hunter, position)
+	print("new TRAP at", position)
 	local self = setmetatable({}, Trap)
 
 	self.Hunter = hunter
 	self.IsActive = true
 
 	-- spawn visuel OUVERT
-	self.Model = TrapOpenTemplate:Clone()
+	self.Model = TrapFolderModel.TrapOpen:Clone()
 	self.Model.Parent = TrapsFolder
 	SnapModelToGround(self.Model, position)
 	SetupTrapModel(self.Model)
@@ -133,15 +104,14 @@ function Trap:Check()
 		params
 	)
 
-	for _, part in ipairs(parts) do
+	for _, part in parts do
 		local model = part:FindFirstAncestorWhichIsA("Model")
 		if model and model ~= self.Hunter.Model then
-			local hum =
-				model:FindFirstChildOfClass("Humanoid")
-				or model:FindFirstChild("Humanoid", true)
+			local char = Players:GetPlayerFromCharacter(model)
+			local rabbit = PlayerManager:GetRabbit(char)
 
-			if hum and hum.Health > 0 then
-				self:Trigger(hum)
+			if rabbit and rabbit.Health > 0 then
+				self:Trigger(rabbit)
 				return
 			end
 		end
@@ -151,19 +121,19 @@ end
 ----------------------------------------------------------
 -- Trigger
 ----------------------------------------------------------
-function Trap:Trigger(humanoid)
+function Trap:Trigger(rabbit)
 	if not self.IsActive then return end
 	self.IsActive = false
 
 	------------------------------------------------------
 	-- DÉGÂTS (50 % HP ACTUELS)
 	------------------------------------------------------
-	humanoid:TakeDamage(humanoid.Health * 0.5)
+	rabbit:RemoveHealth(50)
 
 	------------------------------------------------------
 	-- Visuel FERMÉ
 	------------------------------------------------------
-	local closed = TrapClosedTemplate:Clone()
+	local closed = TrapFolderModel.TrapClose:Clone()
 	closed.Parent = TrapsFolder
 	closed:PivotTo(self.Model:GetPivot())
 	SetupTrapModel(closed)

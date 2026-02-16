@@ -110,6 +110,17 @@ local BT2 = WeightedSelector.new({
 		node = FollowTarget.new()
 	},
 
+	{
+		nom = "PlacePiege",
+		weight = function()
+			return blackboard:GetPoids("PlacePiege")
+		end,
+		block = true,
+		priority = 2,
+		node = MakeTrap.new()
+	},
+
+
 	-- =========================
 	-- EXPLORATION
 	-- =========================

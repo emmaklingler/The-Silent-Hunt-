@@ -22,6 +22,8 @@ function HunterUtility.CalculePoids(hunter, blackboard)
 	local PoidsGetMunitions = (1-hunterStats.balleReserve) * (1-stats.ligneDeVue) * (1-hunterStats.fatigue/2)
 	local PoidsPoursuitePosition = hunterStats.patience * (1-stats.ligneDeVue) * (1-hunterStats.fatigue)/2 * stats.position
 
+	local PoidsPlacePiege = hunterStats.patience * (1-hunterStats.fatigue) * hunterStats.trapsStock
+
 	--Exploration
 	local PoidsExploration = (1-stats.ligneDeVue) * (1-math.max(PoidsRecharge, PoidsGetMunitions, PoidsPoursuitePosition))
 
@@ -35,7 +37,8 @@ function HunterUtility.CalculePoids(hunter, blackboard)
 		Recharge = PoidsRecharge,
 		ChercheMunitions = PoidsGetMunitions,
 		PoursuitePosition = PoidsPoursuitePosition,
-
+		PlacePiege = PoidsPlacePiege,
+		
 		Exploration = PoidsExploration,
 	}
 	ChangePoids:FireAllClients(list)

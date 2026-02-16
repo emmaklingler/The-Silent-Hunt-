@@ -90,10 +90,14 @@ function Hunter.new(model: Model)
 	-- =============================
 	-- Pèges
 	-- =============================
-	-- self.ActiveTraps = {}
-	-- self.maxActiveTraps = 4
+	self.ActiveTraps = {}
+	self.maxActiveTraps = 4
 	self.trapsStockMax = 5
 	self.trapsStock = self.trapsStockMax
+
+	self.isPlacingTrap = false
+	self.trapDuration = 3
+	self.trapEndTime = 0
 
 	self.poidStat = {
 		fatigue = 0.5,
@@ -101,9 +105,11 @@ function Hunter.new(model: Model)
 		aggressivite = 0.5,	
 		balleChargeur = 1,
 		balleReserve = 1,
+		trapsStock = 1,
 	}
 	self:ChangePoidStat("balleChargeur")
 	self:ChangePoidStat("balleReserve")
+	self:ChangePoidStat("trapsStock")
 
 
 	return self
@@ -115,6 +121,8 @@ function Hunter:ChangePoidStat(stat, val)
 		self.poidStat.balleChargeur = math.clamp((self.ammoInMag or 0) / (self.magSize or 1), 0, 1)
 	elseif stat == "balleReserve" then
 		self.poidStat.balleReserve = math.clamp((self.ammoReserve or 0) / (self.maxAmmoReserve or 1), 0, 1)
+	elseif stat == "trapsStock" then
+		self.poidStat.trapsStock = math.clamp((self.trapsStock or 0) / (self.trapsStockMax or 1), 0, 1)
 	else
 		if not self.poidStat[stat] then return end
 		self.poidStat[stat] = math.clamp(self.poidStat[stat] + val, 0, 1)
@@ -657,44 +665,59 @@ function Hunter:RefillMunitions()
 
 	return true
 end
-function Hunter:TryPlaceTrapAt(position)
-	if not self.Root or not position then return false end
 
-	-- cooldown
-	self._nextTrapTime = self._nextTrapTime or 0
-	if os.clock() < self._nextTrapTime then return false end
-	self._nextTrapTime = os.clock() + 2
 
-	-- stock
-	if (self.trapsStock or 0) <= 0 then return false end
+function Hunter:TryPlaceTrapAt()
+
+	-- =========================
+	-- PHASE 1 : EN COURS
+	-- =========================
+	if self.isPlacingTrap then
+		if os.clock() >= self.trapEndTime then
+			self.isPlacingTrap = false
+
+			-- Création réelle du piège
+			local trap = Trap.new(self, self._pendingTrapPosition)
+			table.insert(self.ActiveTraps, trap)
+			self.trapsStock -= 1
+
+			self:ChangePoidStat("trapsStock")
+			self:ChangeState("Idle")
+
+			return Status.SUCCESS
+		end
+
+		return Status.RUNNING
+	end
+
+
+	-- =========================
+	-- PHASE 0 : CONDITIONS
+	-- =========================
+
+	if os.clock() < (self._nextTrapTime or 0) then
+		return Status.FAILURE
+	end
+
+	if (self.trapsStock or 0) <= 0 then
+		return Status.FAILURE
+	end
 
 	self.ActiveTraps = self.ActiveTraps or {}
 
 	--------------------------------------------------------
-	-- Projection au sol
+	-- Position au sol
 	--------------------------------------------------------
-	local rayParams = RaycastParams.new()
-	rayParams.FilterType = Enum.RaycastFilterType.Exclude
-	rayParams.FilterDescendantsInstances = {
-		self.Model,
-		workspace:FindFirstChild("Traps")
-	}
-
-	local origin = position + Vector3.new(0, 50, 0)
-	local result = workspace:Raycast(origin, Vector3.new(0, -200, 0), rayParams)
-
-	if not result then return false end
-	if result.Normal.Y < 0.85 then return false end
-
-	local drop = origin.Y - result.Position.Y
-	if drop > 140 then return false end
-
-	position = result.Position
+	local position = Vector3.new(
+		self.Root.Position.X,
+		self.Root.Position.Y - 9.2,
+		self.Root.Position.Z
+	)
 
 	--------------------------------------------------------
-	-- Pas deux pièges trop proches (XZ)
+	-- Vérification distance min
 	--------------------------------------------------------
-	local MIN_DIST = 14
+	local MIN_DIST = 20
 	local pos2D = Vector3.new(position.X, 0, position.Z)
 
 	for i = #self.ActiveTraps, 1, -1 do
@@ -705,21 +728,28 @@ function Hunter:TryPlaceTrapAt(position)
 			local tpos = trap.Model:GetPivot().Position
 			local tpos2D = Vector3.new(tpos.X, 0, tpos.Z)
 			if (tpos2D - pos2D).Magnitude < MIN_DIST then
-				return false
+				return Status.FAILURE
 			end
 		end
 	end
 
-	--------------------------------------------------------
-	-- Création
-	--------------------------------------------------------
-	local trap = Trap.new(self, position)
+	-- =========================
+	-- DÉBUT PLACEMENT
+	-- =========================
 
-	self.trapsStock -= 1
-	table.insert(self.ActiveTraps, trap)
+	self:StopMove()
 
-	return true
+	self.isPlacingTrap = true
+	self.trapEndTime = os.clock() + self.trapDuration
+	self._nextTrapTime = os.clock() + 5
+
+	self._pendingTrapPosition = position
+
+	self:ChangeState("PlaceTrap")
+
+	return Status.RUNNING
 end
+
 
 
 return Hunter

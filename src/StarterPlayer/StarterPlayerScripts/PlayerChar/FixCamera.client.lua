@@ -29,7 +29,7 @@ local function EnableFPSMouse()
 end
 
 
-task.delay(5, EnableFPSMouse)
+--task.delay(5, EnableFPSMouse)
 
 
 --[[
