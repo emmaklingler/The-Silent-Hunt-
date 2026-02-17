@@ -146,5 +146,44 @@ function Blackboard:GetPoids(action)
 	return self.poids and self.poids[action] or 0
 end
 
+-- ===================================================
+-- ================== PARTIE RABBIT ==================
+-- ===================================================
+-- Ajouté sans modifier la partie Hunter existante tkt hugo keur keur
+
+-- Données de perception spécifiques au lapin
+function Blackboard:InitRabbitData()
+	if not self.perceptionRabbit then
+		self.perceptionRabbit = {
+			hunterDistance = 1, -- 0 proche / 1 loin
+			hunger = 0,         -- 0 rassasié / 1 affamé
+			stress = 0,         -- 0 calme / 1 stress max
+			safe = 1            -- 1 = en sécurité
+		}
+	end
+end
+
+-- Mise à jour perception lapin
+function Blackboard:UpdatePerceptionRabbit(rabbit, hunter)
+	self:InitRabbitData()
+
+	-- Distance au chasseur
+	if hunter and hunter.Root then
+		local dist = (rabbit.Root.Position - hunter.Root.Position).Magnitude
+		self.perceptionRabbit.hunterDistance = math.clamp(dist / 200, 0, 1)
+		self.perceptionRabbit.safe = math.clamp(dist / 200, 0, 1)
+	else
+		self.perceptionRabbit.hunterDistance = 1
+		self.perceptionRabbit.safe = 1
+	end
+
+	-- Faim (plus satiety est basse, plus hunger est haute)
+	self.perceptionRabbit.hunger =
+		math.clamp(1 - (rabbit.Satiety / 100), 0, 1)
+
+	-- Stress
+	self.perceptionRabbit.stress =
+		math.clamp((rabbit.Stress or 0) / 100, 0, 1)
+end
 
 return Blackboard

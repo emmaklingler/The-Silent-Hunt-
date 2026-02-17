@@ -11,6 +11,10 @@ local TeleportService = game:GetService("TeleportService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StartEvent = ReplicatedStorage.Remote:WaitForChild("StartGameEvent")
 
+
+local RabbitBotClass = require(game.ServerScriptService.RabbitBot.RabbitBotClass)
+local RabbitBT = require(game.ServerScriptService.RabbitBot.RabbitBT)
+
 local GameManager = {}
 GameManager.__index = GameManager
 
@@ -55,9 +59,20 @@ function GameManager:StartGame(teleportData)
     local Hunter = HunterClass.new(HunterModel)
 
     HunterBT.Start(Hunter) 
+    -- =========================
+    -- SPAWN BOT LAPIN IA
+    -- =========================
+    local rabbitBotModel = workspace:WaitForChild("rabbitbot")
+    local rabbitBot = RabbitBotClass.new(rabbitBotModel)
+    local rabbitBotBT = RabbitBT.new(rabbitBot)
+
+    rabbitBotBT:Start(Hunter)
 
     StartEvent:FireAllClients(teleportData)
+
     return true
+
+    
 end
     
 --[[

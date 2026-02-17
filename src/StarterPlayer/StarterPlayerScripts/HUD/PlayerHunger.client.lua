@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local HungerHUDEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("HungerHUDChangeEvent")
 local HungerEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("HungerChangeEvent")
 local LifeEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
 
@@ -21,6 +22,15 @@ local function UpdateBar()
 end
 
 local rate = 1 -- taux de faim par seconde
+
+HungerHUDEvent.OnClientEvent:Connect(function()
+    if rate == 1 then
+		rate = 3
+	else
+		rate = 1
+	end
+end)
+
 local last = nil
 --[[
 	Début de la boucle de diminution de la faim

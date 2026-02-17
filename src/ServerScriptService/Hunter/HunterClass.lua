@@ -90,10 +90,14 @@ function Hunter.new(model: Model)
 	-- =============================
 	-- Pèges
 	-- =============================
-	-- self.ActiveTraps = {}
-	-- self.maxActiveTraps = 4
+	self.ActiveTraps = {}
+	self.maxActiveTraps = 4
 	self.trapsStockMax = 5
 	self.trapsStock = self.trapsStockMax
+
+	self.isPlacingTrap = false
+	self.trapDuration = 3
+	self.trapEndTime = 0
 
 	self.poidStat = {
 		fatigue = 0.5,
@@ -101,9 +105,11 @@ function Hunter.new(model: Model)
 		aggressivite = 0.5,	
 		balleChargeur = 1,
 		balleReserve = 1,
+		trapsStock = 1,
 	}
 	self:ChangePoidStat("balleChargeur")
 	self:ChangePoidStat("balleReserve")
+	self:ChangePoidStat("trapsStock")
 
 
 	return self
@@ -115,6 +121,8 @@ function Hunter:ChangePoidStat(stat, val)
 		self.poidStat.balleChargeur = math.clamp((self.ammoInMag or 0) / (self.magSize or 1), 0, 1)
 	elseif stat == "balleReserve" then
 		self.poidStat.balleReserve = math.clamp((self.ammoReserve or 0) / (self.maxAmmoReserve or 1), 0, 1)
+	elseif stat == "trapsStock" then
+		self.poidStat.trapsStock = math.clamp((self.trapsStock or 0) / (self.trapsStockMax or 1), 0, 1)
 	else
 		if not self.poidStat[stat] then return end
 		self.poidStat[stat] = math.clamp(self.poidStat[stat] + val, 0, 1)
@@ -658,88 +666,77 @@ function Hunter:RefillMunitions()
 	return true
 end
 
---===========================================================
--- Méthodes spécifiques aux pièges
---===========================================================
+-- =====================================
+-- méthodes spécifiques pour les pièges
+-- =====================================
+function Hunter:TryPlaceTrapAt()
 
-function Hunter:TryPlaceTrapAt(position)
+	print("\n=== [TRAP] TryPlaceTrapAt appelé ===")
 
-	print("----- TryPlaceTrapAt START -----")
+	-- =========================
+	-- PHASE 1 : EN COURS
+	-- =========================
+	if self.isPlacingTrap then
+		print("[TRAP] Placement en cours...")
 
-	if not self.Root then
-		print("[TRAP] ❌ Pas de Root")
-		return false
+		if os.clock() >= self.trapEndTime then
+			print("[TRAP] Fin animation → création du piège")
+
+			self.isPlacingTrap = false
+
+			if not self._pendingTrapPosition then
+				warn("[TRAP] ERREUR : _pendingTrapPosition nil")
+				return Status.FAILURE
+			end
+
+			local trap = Trap.new(self, self._pendingTrapPosition)
+			table.insert(self.ActiveTraps, trap)
+
+			self.trapsStock = math.max(0, self.trapsStock - 1)
+			print("[TRAP] Piège créé. Stock restant:", self.trapsStock)
+
+			self:ChangePoidStat("trapsStock")
+			self:ChangeState("Idle")
+
+			return Status.SUCCESS
+		end
+
+		print("[TRAP] Toujours en animation...")
+		return Status.RUNNING
 	end
 
-	if not position then
-		print("[TRAP] ❌ Position nil")
-		return false
+
+	-- =========================
+	-- PHASE 0 : CONDITIONS
+	-- =========================
+
+	if os.clock() < (self._nextTrapTime or 0) then
+		print("[TRAP] Cooldown actif")
+		return Status.FAILURE
 	end
 
-	print("[TRAP] Position demandée :", position)
-
-	-- cooldown
-	self._nextTrapTime = self._nextTrapTime or 0
-	if os.clock() < self._nextTrapTime then
-		print("[TRAP] ❌ Cooldown actif")
-		return false
-	end
-	self._nextTrapTime = os.clock() + 2
-	print("[TRAP] Cooldown OK")
-
-	-- stock
 	if (self.trapsStock or 0) <= 0 then
-		print("[TRAP] ❌ Plus de stock")
-		return false
+		print("[TRAP] Aucun piège en stock")
+		return Status.FAILURE
 	end
-
-	print("[TRAP] Stock actuel :", self.trapsStock)
 
 	self.ActiveTraps = self.ActiveTraps or {}
 
 	--------------------------------------------------------
-	-- Projection au sol
+	-- Position au sol
 	--------------------------------------------------------
-	local rayParams = RaycastParams.new()
-	rayParams.FilterType = Enum.RaycastFilterType.Exclude
-	rayParams.FilterDescendantsInstances = {
-		self.Model,
-		workspace:FindFirstChild("Traps")
-	}
+	local position = Vector3.new(
+		self.Root.Position.X,
+		self.Root.Position.Y - 9.2,
+		self.Root.Position.Z
+	)
 
-	local origin = position + Vector3.new(0, 50, 0)
-	print("[TRAP] Raycast depuis :", origin)
-
-	local result = workspace:Raycast(origin, Vector3.new(0, -200, 0), rayParams)
-
-	if not result then
-		print("[TRAP] ❌ Raycast n'a rien touché")
-		return false
-	end
-
-	print("[TRAP] Raycast touché :", result.Instance.Name)
-	print("[TRAP] Normal Y :", result.Normal.Y)
-
-	if result.Normal.Y < 0.85 then
-		print("[TRAP] ❌ Surface trop inclinée")
-		return false
-	end
-
-	local drop = origin.Y - result.Position.Y
-	print("[TRAP] Drop hauteur :", drop)
-
-	if drop > 140 then
-		print("[TRAP] ❌ Trop haut")
-		return false
-	end
-
-	position = result.Position
-	print("[TRAP] Position sol validée :", position)
+	print("[TRAP] Position calculée:", position)
 
 	--------------------------------------------------------
-	-- Pas deux pièges trop proches
+	-- Vérification distance min
 	--------------------------------------------------------
-	local MIN_DIST = 14
+	local MIN_DIST = 20
 	local pos2D = Vector3.new(position.X, 0, position.Z)
 
 	for i = #self.ActiveTraps, 1, -1 do
@@ -751,33 +748,39 @@ function Hunter:TryPlaceTrapAt(position)
 		else
 			local tpos = trap.Model:GetPivot().Position
 			local tpos2D = Vector3.new(tpos.X, 0, tpos.Z)
-			local dist = (tpos2D - pos2D).Magnitude
 
-			print("[TRAP] Distance avec piège existant :", dist)
+			local dist = (tpos2D - pos2D).Magnitude
+			print("[TRAP] Distance avec piège existant:", dist)
 
 			if dist < MIN_DIST then
-				print("[TRAP] ❌ Trop proche d’un autre piège")
-				return false
+				print("[TRAP] Trop proche d'un autre piège")
+				return Status.FAILURE
 			end
 		end
 	end
 
-	--------------------------------------------------------
-	-- Création
-	--------------------------------------------------------
-	print("[TRAP] Création du piège")
+	-- =========================
+	-- DÉBUT PLACEMENT
+	-- =========================
 
-	local trap = Trap.new(self, position)
+	print("[TRAP] Conditions OK → début placement")
 
-	self.trapsStock -= 1
-	table.insert(self.ActiveTraps, trap)
+	self:StopMove()
 
-	print("[TRAP] ✅ Piège posé avec succès")
-	print("[TRAP] Stock restant :", self.trapsStock)
-	print("----- TryPlaceTrapAt END -----")
+	self.isPlacingTrap = true
+	self.trapEndTime = os.clock() + self.trapDuration
+	self._nextTrapTime = os.clock() + 5
 
-	return true
+	self._pendingTrapPosition = position
+
+	print("[TRAP] trapEndTime:", self.trapEndTime)
+	print("[TRAP] prochain cooldown:", self._nextTrapTime)
+
+	self:ChangeState("PlaceTrap")
+
+	return Status.RUNNING
 end
+
 
 
 return Hunter

@@ -8,6 +8,7 @@ local PlayerJoinedEvent = ReplicateStorage.Remote:WaitForChild("PlayerJoinedEven
 local PlayerReadyEvent = ReplicateStorage.Remote:WaitForChild("PlayerReadyEvent")
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 local InitGame = require(ServerScriptService.Game.InitGame)
 local PlayerManager = require(game.ServerScriptService.Player.PlayerManager)
@@ -67,12 +68,19 @@ local function StartGracePeriod(teleportData)
 end
 
 PlayerReadyEvent.OnServerEvent:Connect(function()
+	if not template then 
+		template = {
+			nbPlayers = 1,
+			nbBots = 0,
+			lobbyName = "DefaultLobby"
+		}
+	end
 	nbPlayers += 1
 	PlayerJoinedEvent:FireAllClients(nbPlayers, template)
 
 	-- Tous les joueurs sont là → start immédiat
-	if nbPlayers >= template.nbPlayers then
-		task.wait(3)
+	if RunService:IsStudio() or nbPlayers >= template.nbPlayers then
+		task.wait(2)
 		CancelTimers()
 		InitGame:StartGame(template)
 		return
@@ -88,14 +96,14 @@ local function DoSomethingWithALoadedProfile(player, profile)
 		player:Kick("Game already in progress")
 		return
 	end
-	profile.Data = ProfileTemplate --Pour reset les données
+	profile.Data = table.clone(ProfileTemplate) --Pour reset les données
 	--print(profile.Data)
 	local joinData = player:GetJoinData()
     local teleportData = joinData.TeleportData
 	if teleportData then
 		print("TeleportData found:", teleportData)
 	else
-		warn("Pas de data")
+		print("pas de data")
 		teleportData = {
 			nbPlayers = 1,
 			nbBots = 0,

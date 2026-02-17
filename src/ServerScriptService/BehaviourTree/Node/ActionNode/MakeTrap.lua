@@ -8,53 +8,15 @@ function MakeTrap.new(arriveRadius)
 	self.arriveRadius = arriveRadius or 6
 	return self
 end
-
+--[[
+	Noeud MakeTrap: fait poser un piège au chasseur à la dernière position vue de la cible
+	@param chasseur: classe du chasseur
+	@param blackboard: table de données partagées
+	@return Status.SUCCESS si le piège a été posé,
+			Status.FAILURE sinon
+]]
 function MakeTrap:Run(chasseur, blackboard)
-
-	-- cooldown anti spam BT
-	if blackboard.trapCooldownUntil
-		and os.clock() < blackboard.trapCooldownUntil then
-		return Status.FAILURE
-	end
-
-	-- conditions
-	if blackboard:HasValidTarget() then
-		return Status.FAILURE
-	end
-
-	if not blackboard:HasMemory() then
-		return Status.FAILURE
-	end
-
-	if (chasseur.trapsStock or 0) <= 0 then
-		blackboard.trapCooldownUntil = os.clock() + 5
-		return Status.FAILURE
-	end
-
-	local pos = blackboard.lastKnownPosition
-	if not pos then return Status.FAILURE end
-
-	-- attente arrivée
-	local dist = (chasseur.Root.Position - pos).Magnitude
-	if dist > self.arriveRadius then
-		return Status.RUNNING
-	end
-
-	-- pose
-	local ok = chasseur:TryPlaceTrapAt(pos)
-	if ok then
-		if blackboard.ClearMemory then
-			blackboard:ClearMemory()
-		else
-			blackboard.lastKnownPosition = nil
-		end
-
-		blackboard.trapCooldownUntil = os.clock() + 3
-		return Status.SUCCESS
-	end
-
-	blackboard.trapCooldownUntil = os.clock() + 2
-	return Status.FAILURE
+	return chasseur:TryPlaceTrapAt()
 end
 
 return MakeTrap

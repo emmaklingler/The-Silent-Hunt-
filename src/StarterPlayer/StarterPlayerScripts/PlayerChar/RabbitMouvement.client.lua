@@ -162,6 +162,35 @@ RunService.RenderStepped:Connect(function(dt)
     
     wasGrounded = IsGrounded()
     jumpRequested = false
+
+
+    -- =====================================================
+    -- DEBUG CAMERA RABBIT BOT
+    -- =====================================================
+
+    local camera = workspace.CurrentCamera
+    local rabbitBot = workspace:FindFirstChild("rabbitbot")
+
+    UserInputService.InputBegan:Connect(function(input, gp)
+        if gp then return end
+
+        -- B = suivre le bot
+        if input.KeyCode == Enum.KeyCode.B then
+            if rabbitBot and rabbitBot:FindFirstChild("Humanoid") then
+                print("Camera -> RabbitBot")
+                camera.CameraSubject = rabbitBot.Humanoid
+                camera.CameraType = Enum.CameraType.Custom
+            end
+        end
+
+        -- P = revenir au joueur
+        if input.KeyCode == Enum.KeyCode.P then
+            print("Camera -> Player")
+            camera.CameraSubject = humanoid
+            camera.CameraType = Enum.CameraType.Custom
+        end
+    end)
+
 end)
 
 
