@@ -8,6 +8,9 @@ local LifeEvent = RemoteFolder:WaitForChild("LifeChangeEvent")
 
 local PlayerSpawn = game.Workspace:FindFirstChild("PlayerSpawn");
 
+local ServerStorage = game:GetService("ServerStorage")
+local NameTag = ServerStorage:WaitForChild("Asset"):WaitForChild("NameTag")
+
 function Rabbit.new(player, profile)
     local self = setmetatable({}, Rabbit)
     self.Player = player
@@ -46,20 +49,16 @@ end
     @param amount: nombre a enlever
 ]]
 function Rabbit:RemoveSatiety(amount)
-    if self.Satiety > 0 and self.DansTerrier == true then
-        self.Satiety -= amount*3
-        if self.Satiety < 0 then
-            self.Satiety = 0
-        end
-    elseif self.Satiety > 0 then
+    if self.Satiety > 0 then
+        if self.DansTerrier then amount *= 3 end -- Si le lapin est dans un terrier, il perd plus de satiety
         self.Satiety -= amount
         if self.Satiety < 0 then
             self.Satiety = 0
         end
     else
+        --Sinon il n'a plus de satiety, il perd de la vie
         self:RemoveHealth(amount*10)
     end
-    print(" satiety: " .. self.Satiety)
 end
 
 --[[
@@ -86,7 +85,6 @@ function Rabbit:SeCacher()
     end
     -- rend le caractère transparent ou non
     self.Model["Plane.001"].Transparency = self.EstCache and 1 or 0
-    print(self.Player.Name .. " est caché: " .. tostring(self.EstCache))
 end
 
 function Rabbit:Terrier()
@@ -140,6 +138,12 @@ function Rabbit:Spawn()
 	
     -- Cloner et positionner le character
 	local character = rabbitChar:Clone()
+
+    local nameTag = NameTag:Clone()
+    nameTag.TextLabel.Text = player.Name
+    nameTag.PlayerToHideFrom = player
+    nameTag.Parent = character
+
 	character.Name = player.Name
 	character.Parent = workspace
 	

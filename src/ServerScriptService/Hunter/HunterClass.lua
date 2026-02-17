@@ -37,7 +37,7 @@ function Hunter.new(model: Model)
 	-- =============================
 	self.rangedAttackDamage = 25
 
-	self.rangedRange = 100
+	self.rangedRange = 150
 	self.rangedContext = nil
 	-- Timing tir
 	self.rangedCooldown = 2
@@ -634,7 +634,6 @@ end
 	@return boolean - true si le chasseur peut recharger, false sinon
 ]]
 function Hunter:CanReload()
-	print("Ammo in mag:", self.ammoInMag, "Ammo reserve:", self.ammoReserve)
 	return (self.ammoReserve or 0) > 0 and (self.ammoInMag or 0) < (self.magSize or 0)
 end
 

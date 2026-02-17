@@ -6,7 +6,7 @@ local TimeChangeEvent = ReplicatedStorage.Remote:WaitForChild("TimeChangeEvent")
 
 local debut = os.clock()
 local tempsEcoule = 0
-local tempsMax = 300
+local tempsMax = 100
 
 local eventTick = 0
 local eventFire = 100
