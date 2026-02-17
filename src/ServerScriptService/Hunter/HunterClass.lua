@@ -657,16 +657,43 @@ function Hunter:RefillMunitions()
 
 	return true
 end
+
+--===========================================================
+-- Méthodes spécifiques aux pièges
+--===========================================================
+
 function Hunter:TryPlaceTrapAt(position)
-	if not self.Root or not position then return false end
+
+	print("----- TryPlaceTrapAt START -----")
+
+	if not self.Root then
+		print("[TRAP] ❌ Pas de Root")
+		return false
+	end
+
+	if not position then
+		print("[TRAP] ❌ Position nil")
+		return false
+	end
+
+	print("[TRAP] Position demandée :", position)
 
 	-- cooldown
 	self._nextTrapTime = self._nextTrapTime or 0
-	if os.clock() < self._nextTrapTime then return false end
+	if os.clock() < self._nextTrapTime then
+		print("[TRAP] ❌ Cooldown actif")
+		return false
+	end
 	self._nextTrapTime = os.clock() + 2
+	print("[TRAP] Cooldown OK")
 
 	-- stock
-	if (self.trapsStock or 0) <= 0 then return false end
+	if (self.trapsStock or 0) <= 0 then
+		print("[TRAP] ❌ Plus de stock")
+		return false
+	end
+
+	print("[TRAP] Stock actuel :", self.trapsStock)
 
 	self.ActiveTraps = self.ActiveTraps or {}
 
@@ -681,30 +708,55 @@ function Hunter:TryPlaceTrapAt(position)
 	}
 
 	local origin = position + Vector3.new(0, 50, 0)
+	print("[TRAP] Raycast depuis :", origin)
+
 	local result = workspace:Raycast(origin, Vector3.new(0, -200, 0), rayParams)
 
-	if not result then return false end
-	if result.Normal.Y < 0.85 then return false end
+	if not result then
+		print("[TRAP] ❌ Raycast n'a rien touché")
+		return false
+	end
+
+	print("[TRAP] Raycast touché :", result.Instance.Name)
+	print("[TRAP] Normal Y :", result.Normal.Y)
+
+	if result.Normal.Y < 0.85 then
+		print("[TRAP] ❌ Surface trop inclinée")
+		return false
+	end
 
 	local drop = origin.Y - result.Position.Y
-	if drop > 140 then return false end
+	print("[TRAP] Drop hauteur :", drop)
+
+	if drop > 140 then
+		print("[TRAP] ❌ Trop haut")
+		return false
+	end
 
 	position = result.Position
+	print("[TRAP] Position sol validée :", position)
 
 	--------------------------------------------------------
-	-- Pas deux pièges trop proches (XZ)
+	-- Pas deux pièges trop proches
 	--------------------------------------------------------
 	local MIN_DIST = 14
 	local pos2D = Vector3.new(position.X, 0, position.Z)
 
 	for i = #self.ActiveTraps, 1, -1 do
 		local trap = self.ActiveTraps[i]
+
 		if not trap or not trap.Model or not trap.Model.Parent then
+			print("[TRAP] Nettoyage piège invalide")
 			table.remove(self.ActiveTraps, i)
 		else
 			local tpos = trap.Model:GetPivot().Position
 			local tpos2D = Vector3.new(tpos.X, 0, tpos.Z)
-			if (tpos2D - pos2D).Magnitude < MIN_DIST then
+			local dist = (tpos2D - pos2D).Magnitude
+
+			print("[TRAP] Distance avec piège existant :", dist)
+
+			if dist < MIN_DIST then
+				print("[TRAP] ❌ Trop proche d’un autre piège")
 				return false
 			end
 		end
@@ -713,10 +765,16 @@ function Hunter:TryPlaceTrapAt(position)
 	--------------------------------------------------------
 	-- Création
 	--------------------------------------------------------
+	print("[TRAP] Création du piège")
+
 	local trap = Trap.new(self, position)
 
 	self.trapsStock -= 1
 	table.insert(self.ActiveTraps, trap)
+
+	print("[TRAP] ✅ Piège posé avec succès")
+	print("[TRAP] Stock restant :", self.trapsStock)
+	print("----- TryPlaceTrapAt END -----")
 
 	return true
 end

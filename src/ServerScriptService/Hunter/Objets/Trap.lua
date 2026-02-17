@@ -31,43 +31,14 @@ local TrapClosedTemplate = TrapFolder:WaitForChild("BearTrap_Closed")
 local function SetupTrapModel(model)
 	for _, part in ipairs(model:GetDescendants()) do
 		if part:IsA("BasePart") then
-			part.Anchored = true          -- 🔒 ne bouge plus
+			part.Anchored = true
 			part.CanCollide = false
 			part.CanTouch = false
-			part.CanQuery = true         -- pour Overlap
+			part.CanQuery = true
 		end
 	end
 end
 
-
-local function GetRabbitFromHumanoid(humanoid)
-    if not humanoid then return nil end
-
-    local model = humanoid.Parent
-    if not model then return nil end
-
-    local player = Players:GetPlayerFromCharacter(model)
-    if not player then return nil end
-
-    return PlayerManager:GetRabbit(player)
-end
-
-
-function Trap:Trigger(humanoid)
-    if not self.IsActive then return end
-    self.IsActive = false
-
-    local rabbit = GetRabbitFromHumanoid(humanoid)
-
-    if rabbit then
-        rabbit:RemoveHealth(30) -- ajuste les dégâts
-        print("[TRAP] Rabbit touché :", rabbit.Player.Name)
-    else
-        warn("[TRAP] Humanoid touché mais aucun Rabbit trouvé")
-    end
-
-
--- 🔑 colle le modèle AU SOL, pas au pivot
 local function SnapModelToGround(model, groundPos)
 	local _, size = model:GetBoundingBox()
 	model:PivotTo(CFrame.new(
@@ -75,6 +46,18 @@ local function SnapModelToGround(model, groundPos)
 		groundPos.Y + size.Y / 2,
 		groundPos.Z
 	))
+end
+
+local function GetRabbitFromHumanoid(humanoid)
+	if not humanoid then return nil end
+
+	local model = humanoid.Parent
+	if not model then return nil end
+
+	local player = Players:GetPlayerFromCharacter(model)
+	if not player then return nil end
+
+	return PlayerManager:GetRabbit(player)
 end
 
 ----------------------------------------------------------
@@ -86,23 +69,21 @@ function Trap.new(hunter, position)
 	self.Hunter = hunter
 	self.IsActive = true
 
-	-- spawn visuel OUVERT
+	-- Spawn modèle ouvert
 	self.Model = TrapOpenTemplate:Clone()
 	self.Model.Parent = TrapsFolder
 	SnapModelToGround(self.Model, position)
 	SetupTrapModel(self.Model)
 
-	-- zone de détection (au-dessus du sol)
+	-- Zone détection
 	self.boxSize = Vector3.new(6, 3, 6)
 	self.boxOffset = Vector3.new(0, 1.5, 0)
 
-	------------------------------------------------------
-	-- LOOP DE DÉTECTION (OBLIGATOIRE)
-	------------------------------------------------------
+	-- Loop détection
 	task.spawn(function()
 		while self.IsActive and self.Model and self.Model.Parent do
 			self:Check()
-			task.wait(0.15) -- ~7 checks/sec (safe)
+			task.wait(0.15)
 		end
 	end)
 
@@ -135,7 +116,7 @@ function Trap:Check()
 
 	for _, part in ipairs(parts) do
 		local model = part:FindFirstAncestorWhichIsA("Model")
-		if model and model ~= self.Hunter.Model then
+		if model and model ~= (self.Hunter and self.Hunter.Model) then
 			local hum =
 				model:FindFirstChildOfClass("Humanoid")
 				or model:FindFirstChild("Humanoid", true)
@@ -156,12 +137,19 @@ function Trap:Trigger(humanoid)
 	self.IsActive = false
 
 	------------------------------------------------------
-	-- DÉGÂTS (50 % HP ACTUELS)
+	-- DÉGÂTS via ta logique Rabbit
 	------------------------------------------------------
-	humanoid:TakeDamage(humanoid.Health * 0.5)
+	local rabbit = GetRabbitFromHumanoid(humanoid)
+
+	if rabbit then
+		rabbit:RemoveHealth(30)
+		print("[TRAP] Rabbit touché :", rabbit.Player.Name)
+	else
+		warn("[TRAP] Humanoid touché mais aucun Rabbit trouvé")
+	end
 
 	------------------------------------------------------
-	-- Visuel FERMÉ
+	-- Visuel fermé
 	------------------------------------------------------
 	local closed = TrapClosedTemplate:Clone()
 	closed.Parent = TrapsFolder
@@ -172,7 +160,7 @@ function Trap:Trigger(humanoid)
 	self.Model = closed
 
 	------------------------------------------------------
-	-- Auto-destruction
+	-- Auto destruction
 	------------------------------------------------------
 	task.delay(5, function()
 		if self.Model then
@@ -182,7 +170,7 @@ function Trap:Trigger(humanoid)
 	end)
 
 	------------------------------------------------------
-	-- Rendre le piège au chasseur
+	-- Rendre piège au chasseur
 	------------------------------------------------------
 	if self.Hunter and self.Hunter.RecoverTrap then
 		self.Hunter:RecoverTrap()
