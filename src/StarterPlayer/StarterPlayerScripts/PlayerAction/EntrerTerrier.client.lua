@@ -27,26 +27,18 @@ local function InitPorte(porteSource, porteDestination)
 	end)
 end
 
---------------------------------------------------
--- Attendre que les portes soient chargées
---------------------------------------------------
-
-local function WaitForChildren(folder)
-	while #folder:GetChildren() == 0 do
-		folder.ChildAdded:Wait()
-	end
-end
-
-WaitForChildren(EntreeFolder)
-WaitForChildren(SortieFolder)
 
 --------------------------------------------------
 -- Associer les portes
 --------------------------------------------------
-
 for _, porteEntree in EntreeFolder:GetChildren() do
-	
 	local porteSortie = SortieFolder:WaitForChild(porteEntree.Name)
 	InitPorte(porteEntree, porteSortie)
 	InitPorte(porteSortie, porteEntree)
 end
+
+EntreeFolder.ChildAdded:Connect(function(porteEntree)
+	local porteSortie = SortieFolder:WaitForChild(porteEntree.Name)
+	InitPorte(porteEntree, porteSortie)
+	InitPorte(porteSortie, porteEntree)
+end)
