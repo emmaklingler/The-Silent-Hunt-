@@ -8,7 +8,7 @@ local RemoteHUDHunger = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("H
 
 local function TeleportationTerrier(player, porte)
     local RabbitClass = PlayerManager:GetRabbit(player)
-    RabbitClass.Model:MoveTo(porte.Position)
+    RabbitClass.Model:MoveTo(porte.CFrame.LookVector * 5)
     RabbitClass:Terrier()
     RemoteHUDHunger:FireClient(player, RabbitClass.Hunger)
 end
