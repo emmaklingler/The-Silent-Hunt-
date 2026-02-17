@@ -13,7 +13,12 @@ function HunterUtility.CalculePoids(hunter, blackboard)
 	if (stats.distanceLapin >  0.08) then
 		PoidsCorpsACorps = 0
 	end
-	local PoidsTir = hunterStats.aggressivite * stats.ligneDeVue * hunterStats.balleChargeur * math.max(0, 1 - math.abs(stats.distanceLapin - 0.3)/0.6)
+
+	local CourbeBalleChargeur = math.min(1,math.sqrt(hunterStats.balleChargeur) * 1.2)
+	local CourbeDistanceLapin = math.max(0, math.min(1,1-((math.abs(stats.distanceLapin - 0.7)+0.3)^3)))
+	local CourbeFatigue = math.max(0,(hunterStats.fatigue^3) * 0.8)
+
+	local PoidsTir = CourbeBalleChargeur*math.max(0,CourbeDistanceLapin-CourbeFatigue)
 	local PoidsPoursuite = (1-hunterStats.fatigue) * stats.ligneDeVue * hunterStats.patience
 
 	--Logistique
