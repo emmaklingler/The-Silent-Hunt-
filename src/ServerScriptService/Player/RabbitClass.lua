@@ -48,12 +48,18 @@ end
 function Rabbit:RemoveSatiety(amount)
     if self.Satiety > 0 and self.DansTerrier == true then
         self.Satiety -= amount*3
+        if self.Satiety < 0 then
+            self.Satiety = 0
+        end
     elseif self.Satiety > 0 then
         self.Satiety -= amount
-        --Si satiety < 0 Meurt
+        if self.Satiety < 0 then
+            self.Satiety = 0
+        end
     else
-        self:RemoveHealth(amount)
+        self:RemoveHealth(amount*10)
     end
+    print(" satiety: " .. self.Satiety)
 end
 
 --[[
@@ -83,8 +89,10 @@ function Rabbit:SeCacher()
     print(self.Player.Name .. " est caché: " .. tostring(self.EstCache))
 end
 
-
-
+function Rabbit:Terrier()
+    self.DansTerrier = not self.DansTerrier
+    
+end
 
 function Rabbit:DansCachette()
     return self.EstCache
