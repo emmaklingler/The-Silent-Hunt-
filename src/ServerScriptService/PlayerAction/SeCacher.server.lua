@@ -10,7 +10,10 @@ local SeCacherEvent = game.ReplicatedStorage.Remote:WaitForChild("SeCacherEvent"
 local function TeleportationBuisson(player, buisson)
     local RabbitClass = PlayerManager:GetRabbit(player)
     RabbitClass.Model:MoveTo(buisson.Position)
-    RabbitClass:RemoveSatiety(20)
+    local estCachee = PlayerManager:GetRabbit(player).EstCache
+    if estCachee then
+        RabbitClass:RemoveSatiety(20)
+    end
     RemoteHunger:FireClient(player, RabbitClass.Satiety)
 end
 --[[

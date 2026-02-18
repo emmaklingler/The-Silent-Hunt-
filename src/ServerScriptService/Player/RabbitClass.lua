@@ -79,9 +79,9 @@ function Rabbit:SeCacher()
     self.EstCache = not self.EstCache
     -- bloque ou débloque le mouvement (il faut aussi bloquer le saut)
     if self.EstCache then
-        self.Humanoid.WalkSpeed = 0
+        self.Root.Anchored = true
     else
-        self.Humanoid.WalkSpeed = 16
+        self.Root.Anchored = false
     end
     -- rend le caractère transparent ou non
     self.Model["Plane.001"].Transparency = self.EstCache and 1 or 0
