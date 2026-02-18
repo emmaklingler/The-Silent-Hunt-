@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TimeChangeEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("TimeChangeEvent")
+local StartGameEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("StartGameEvent")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player.PlayerGui
@@ -12,10 +13,15 @@ local timer = 0
 local start = false
 local last = nil
 
+StartGameEvent.OnClientEvent:Connect(function()
+	label = PlayerGui:WaitForChild("HUD").Text.Timer
+end)
+
 --[[
 	Affiche le timer
 ]]
 local function Update()
+	if not label then return end
 	label.Text = math.round(timer)
 end
 
@@ -43,7 +49,6 @@ TimeChangeEvent.OnClientEvent:Connect(function(newTime)
 	timer = newTime
 	if not start then
 		-- Si pas encore démarré, lance la boucle de diminution de la timer
-		label = PlayerGui:WaitForChild("HUD").Text.Timer
 		start = true
 		task.spawn(Start)
 	end

@@ -1,8 +1,9 @@
 local TimeSystem = {}
-local listPlayer = {} -- dictionnaire des joueurs et de leurs classes RabbitClass
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TimeChangeEvent = ReplicatedStorage.Remote:WaitForChild("TimeChangeEvent")
+local PlayerDeadEvent = ReplicatedStorage.Remote:WaitForChild("PlayerDeadServerEvent")
 
 local debut = os.clock()
 local tempsEcoule = 0
@@ -19,7 +20,6 @@ local endFunction = nil
 ]]
 function TimeSystem:Init(players, func)
     debut = os.clock()
-    listPlayer = players   
     endFunction = func
     TimeChangeEvent:FireAllClients(tempsEcoule)
 end
@@ -44,6 +44,15 @@ function TimeSystem:Tick(dt)
         endFunction()
     end
 end
+
+local nbDead = 0
+PlayerDeadEvent.Event:Connect(function(player)
+    nbDead += 1
+    if nbDead >= #Players:GetPlayers() then
+        print("Tous les joueurs sont morts !")
+        endFunction()
+    end
+end)
 
 
 return TimeSystem

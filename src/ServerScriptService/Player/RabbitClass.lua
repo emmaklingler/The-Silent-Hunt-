@@ -6,7 +6,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RemoteFolder = ReplicatedStorage:WaitForChild("Remote")
 local LifeEvent = RemoteFolder:WaitForChild("LifeChangeEvent")
 
-local PlayerSpawn = game.Workspace:FindFirstChild("PlayerSpawn");
+local PlayerSpawn = game.Workspace:FindFirstChild("PlayerSpawn")
+
+local PlayerDeadEvent = ReplicatedStorage.Remote:WaitForChild("PlayerDeadServerEvent")
 
 local ServerStorage = game:GetService("ServerStorage")
 local NameTag = ServerStorage:WaitForChild("Asset"):WaitForChild("NameTag")
@@ -52,7 +54,7 @@ function Rabbit:RemoveSatiety(amount)
     if self.Satiety > 0 then
         if self.DansTerrier then amount *= 3 end -- Si le lapin est dans un terrier, il perd plus de satiety
         self.Satiety -= amount
-        if self.Satiety < 0 then
+        if self.Satiety <= 0 then
             self.Satiety = 0
         end
     else
@@ -108,7 +110,7 @@ function Rabbit:RemoveHealth(amount)
     if self.Health <= 0 then
         self.Health = 0
         self.Alive = false
-        print(self.Player.Name .. " est mort.")
+        PlayerDeadEvent:Fire(self.Player)
     end
     LifeEvent:FireClient(self.Player, self.Health)
 end
