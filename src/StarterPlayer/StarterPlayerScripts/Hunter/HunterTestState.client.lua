@@ -7,10 +7,8 @@ local ChangePoids = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("Chang
 local Player = game:GetService("Players").LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
-local Template = PlayerGui:WaitForChild("Test"):WaitForChild("Template")
 
 ChangeAction.OnClientEvent:Connect(function(stats)
-
     for _, frame in PlayerGui:WaitForChild("Test").Frame.Frame:GetChildren() do
             if frame:IsA("TextLabel") then
                 frame:Destroy()
@@ -18,7 +16,7 @@ ChangeAction.OnClientEvent:Connect(function(stats)
         end
     for name, val in stats do
 	    val = math.floor(val * 1000) / 1000
-        local textLabel = Template:Clone()
+        local textLabel = PlayerGui:WaitForChild("Test"):WaitForChild("Template"):Clone()
         textLabel.Text = name .. " : " .. val
         textLabel.Visible = true
         textLabel.Parent = PlayerGui:WaitForChild("Test").Frame.Frame
@@ -34,7 +32,7 @@ ChangePerception.OnClientEvent:Connect(function(stats)
         end
     for name, val in stats do
 	    val = math.floor(val * 1000) / 1000
-        local textLabel = Template:Clone()
+        local textLabel = PlayerGui:WaitForChild("Test"):WaitForChild("Template"):Clone()
         textLabel.Text = name .. " : " .. val
         textLabel.Visible = true
         textLabel.Parent = PlayerGui:WaitForChild("Test").Frame.Perception
@@ -52,7 +50,7 @@ ChangePoids.OnClientEvent:Connect(function(stats)
     for name, val in stats do
         i+=1
 	    val = math.floor(val * 1000) / 1000
-        local textLabel = Template:Clone()
+        local textLabel = PlayerGui:WaitForChild("Test"):WaitForChild("Template"):Clone()
         textLabel.Name = i
         textLabel.Text = name .. " : " .. val
         textLabel.Visible = true

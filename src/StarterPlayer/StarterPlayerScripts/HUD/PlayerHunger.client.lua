@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local HungerHUDEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("HungerHUDChangeEvent")
 local HungerEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("HungerChangeEvent")
 local LifeEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
+local StartGameEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("StartGameEvent")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player.PlayerGui
@@ -13,13 +14,20 @@ local satiety = 0
 local start = false
 local isAlive = true
 
+local BarreDeFaim = nil
 --[[
 	Met a jour la barre de faim en fonction de la satiety
 ]]
 local function UpdateBar()
-	local BarreDeFaim = PlayerGui:WaitForChild("HUD").SG_HUD.Faim.Bar.Frame
+	if not BarreDeFaim then return end
 	BarreDeFaim.Size = UDim2.new(satiety/100, 0, 1, 0)
 end
+
+StartGameEvent.OnClientEvent:Connect(function()
+	BarreDeFaim = PlayerGui:WaitForChild("HUD").SG_HUD.Faim.Bar.Frame
+	UpdateBar()
+end)
+
 
 local rate = 1 -- taux de faim par seconde
 
