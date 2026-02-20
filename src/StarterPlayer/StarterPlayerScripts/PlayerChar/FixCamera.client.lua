@@ -29,7 +29,7 @@ local function EnableFPSMouse()
     UserInputService.MouseIconEnabled = false
 end
 
-if RunService:IsClient() then
+if not RunService:IsStudio() then
     task.delay(5, EnableFPSMouse)
 end
 
