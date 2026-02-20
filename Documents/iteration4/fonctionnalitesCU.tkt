@@ -1,0 +1,86 @@
+Itération III – Utility AI & Profondeur Gameplay
+
+Fonctionnalités développées
+
+Lors de cette itération, les fonctionnalités suivantes ont été développées :
+
+Finalisation complète du système de pièges :
+
+Pose de pièges avec limite de stock
+
+Déclenchement par le lapin
+
+Dégâts appliqués
+
+Récupération automatique du piège après activation
+
+Mise en place d’un système d’Utility AI :
+
+Calcul dynamique des scores d’actions
+
+Normalisation des attributs entre 0 et 1
+
+Sélection de l’action avec la meilleure utility
+
+Implémentation des utilities pour :
+
+Tir
+
+Recharge
+
+Pose de piège
+
+Attributs pris en compte :
+
+Balles dans le chargeur
+
+Fatigue
+
+Distance au lapin
+
+Stock de pièges
+
+Mémoire de position du lapin
+
+Courbes d’utility non linéaires pour éviter les comportements extrêmes
+
+Stabilisation des attributs dynamiques (fatigue, agressivité, patience)
+
+Nouveau modèle 3D du chasseur
+
+Animations du chasseur
+
+Ambiance lumineuse et amélioration visuelle globale
+
+Système de lobby multijoueur complet
+
+Ajout UX :
+
+Nom du joueur affiché
+
+Mode spectateur après la mort
+
+Phase de tests IA :
+
+Tests unitaires des ActionNodes (CloseAttack, Follow, Trap, Reload…)
+
+Utilisation de Fake Hunter et Fake Blackboard
+
+Vérification des états SUCCESS / FAILURE / RUNNING
+
+Cas d’utilisation
+
+CU1 – Le chasseur doit choisir entre tirer ou recharger
+Selon la fatigue, la distance au lapin et le nombre de balles, l’Utility AI sélectionne l’action optimale.
+
+CU2 – Le chasseur hésite entre poser un piège ou poursuivre
+Si la mémoire de position est pertinente et le stock de pièges suffisant, il pose un piège.
+
+CU3 – Le lapin déclenche un piège
+Le lapin subit des dégâts et le chasseur récupère son piège.
+
+CU4 – Le joueur meurt
+Le joueur passe automatiquement en mode spectateur.
+
+CU5 – Début de partie multijoueur
+Les joueurs passent par le lobby avant le lancement de la partie.

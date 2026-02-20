@@ -1,0 +1,23 @@
+PROJET : The Silent Hunt
+Itération IV – Bilan
+
+Bilan
+
+* L’itération 4 marque une structuration importante du projet avec l’introduction complète de l’environnement interactif (terrier, buissons).
+* Le terrier apporte une dimension stratégique forte au gameplay grâce à la téléportation et au système d’équilibrage (temps d’entrée/sortie, gestion de la faim).
+* Les buissons enrichissent les possibilités de fuite et forcent le joueur à mieux gérer sa satiété.
+* L’IA du lapin a été entièrement restructurée via un Behavior Tree dédié, rendant son comportement plus cohérent et modulaire.
+* La séparation claire entre ActionNodes et ConditionNodes améliore la lisibilité et la maintenabilité du code.
+* Le début d’intégration du système Utility permet une transition progressive vers une prise de décision plus dynamique pour le chasseur.
+* Les tests unitaires mis en place renforcent la robustesse de l’architecture IA.
+
+Difficultés rencontrées
+
+* L’équilibrage du terrier a nécessité plusieurs ajustements pour éviter qu’il ne devienne trop puissant.
+* La coordination entre Behavior Tree et Utility a demandé une attention particulière pour éviter les conflits logiques.
+* L’intégration multijoueur a complexifié certains tests comportementaux.
+
+Conclusion
+
+* L’itération 4 consolide l’architecture IA et enrichit significativement le gameplay.
+* Les bases sont désormais solides pour approfondir l’Utility AI et finaliser le bot lapin lors de l’itération suivante.
