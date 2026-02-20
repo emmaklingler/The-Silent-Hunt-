@@ -77,9 +77,15 @@ player:GetPropertyChangedSignal("CameraMode"):Connect(function()
 	end
 end)
 
+<<<<<<< HEAD
 ------------------------------------------------
 -- DEBUG CAMERA BOT
 ------------------------------------------------
+=======
+if not RunService:IsStudio() then
+    task.delay(5, EnableFPSMouse)
+end
+>>>>>>> 813bee182347a6954625e93c4821be54c72bf636
 
 UserInputService.InputBegan:Connect(function(input, gp)
 	if gp then return end

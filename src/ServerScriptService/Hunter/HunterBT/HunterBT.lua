@@ -91,8 +91,8 @@ local BT2 = WeightedSelector.new({
 		weight = function()
 			return blackboard:GetPoids("ChercheMunitions")
 		end,
-		block = false,
-		priority = 0,
+		block = true,
+		priority = 1,
 		node = GetMunitions.new(),
 	},
 
