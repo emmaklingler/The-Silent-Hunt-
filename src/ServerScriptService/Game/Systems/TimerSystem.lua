@@ -7,7 +7,7 @@ local PlayerDeadEvent = ReplicatedStorage.Remote:WaitForChild("PlayerDeadServerE
 
 local debut = os.clock()
 local tempsEcoule = 0
-local tempsMax = 100
+local tempsMax = 150
 
 local eventTick = 0
 local eventFire = 100
