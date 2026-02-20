@@ -99,7 +99,7 @@ local function DoSomethingWithALoadedProfile(player, profile)
 	profile.Data = table.clone(ProfileTemplate) --Pour reset les données
 	--print(profile.Data)
 	local joinData = player:GetJoinData()
-    local teleportData = joinData.TeleportData
+	local teleportData = joinData and joinData.TeleportData
 	if teleportData then
 		print("TeleportData found:", teleportData)
 	else

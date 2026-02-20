@@ -11,6 +11,10 @@ for _, module in RemoteDef:GetChildren() do
             local remoteEvent = Instance.new("RemoteEvent")
             remoteEvent.Name = remoteInfo.Name
             remoteEvent.Parent = Remote
+        elseif remoteInfo.Type == "BindableEvent" then
+            local remoteEvent = Instance.new("BindableEvent")
+            remoteEvent.Name = remoteInfo.Name
+            remoteEvent.Parent = Remote
         elseif remoteInfo.Type == "RemoteFunction" then
             local remoteFunction = Instance.new("RemoteFunction")
             remoteFunction.Name = remoteInfo.Name
