@@ -1,4 +1,5 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
@@ -15,7 +16,7 @@ end)
 
 -- Empêche le joueur de changer le mode de la caméra
 player:GetPropertyChangedSignal("CameraMode"):Connect(function()
-	if player.CameraMode ~= Enum.CameraMode.LockFirstPerson then
+	if player.CameraMode ~= Enum.CameraMode.LockFirstPerson and camera.CameraType ~= Enum.CameraType.Orbital then
 		player.CameraMode = Enum.CameraMode.LockFirstPerson
 	end
 end)
@@ -28,15 +29,23 @@ local function EnableFPSMouse()
     UserInputService.MouseIconEnabled = false
 end
 
+if RunService:IsClient() then
+    task.delay(5, EnableFPSMouse)
+end
 
---task.delay(5, EnableFPSMouse)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LifeEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("LifeChangeEvent")
 
 
---[[
 -- Désactiver FPS (menu, pause, etc)
 local function DisableFPSMouse()
+    player.CameraMode = Enum.CameraMode.Classic
     UserInputService.MouseBehavior = Enum.MouseBehavior.Default
     UserInputService.MouseIconEnabled = true
 end
 
-]]
+LifeEvent.OnClientEvent:Connect(function(health)
+    if health <= 0 then
+        DisableFPSMouse()
+    end
+end)

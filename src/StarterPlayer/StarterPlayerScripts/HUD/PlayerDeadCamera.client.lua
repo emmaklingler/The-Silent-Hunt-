@@ -59,6 +59,8 @@ LifeEvent.OnClientEvent:Connect(function(lifeValue)
         GUICamera.Enabled = true
         camera.FieldOfView = 70
         camera.CameraType = Enum.CameraType.Orbital
+        Player.CameraMinZoomDistance = 15
+        Player.CameraMaxZoomDistance = 15
         UpdateCamera(Player)
     end
 end)
