@@ -1,12 +1,12 @@
 local HunterBT = {}
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
+HunterBT.__index = HunterBT
 
--- importations des modules
+local RunService = game:GetService("RunService")
+
+-- Import modules
 local Node = game.ServerScriptService:WaitForChild("BehaviourTree"):WaitForChild("Node")
 local HunterUtility = require(script.Parent.HunterUtility)
 
-local Selector = require(Node.Utiles.Selector)
 local WeightedSelector = require(Node.Utiles.WeightedSelector)
 local Sequence = require(Node.Utiles.Sequence)
 local MemorySequence = require(Node.Utiles.MemorySequence)
@@ -17,27 +17,27 @@ local CloseAttack = require(Node.ActionNode.CloseAttack)
 local RangedAttack = require(Node.ActionNode.RangedAttack)
 local ReloadWeapon = require(Node.ActionNode.ReloadWeapon)
 local GetMunitions = require(Node.ActionNode.GetMunitions)
-
-local NeedsReload = require(Node.ConditionNode.NeedsReload)
-local NeedsMunitions = require(Node.ConditionNode.NeedsMunitions)
-local InRange = require(Node.ConditionNode.InRange)
-local HasTarget = require(Node.ConditionNode.HasTarget)
-local HasLastSeenPosition = require(Node.ConditionNode.HasLastSeenPosition)
-
-local DetectionVision = require(Node.Perception.DetectionVision)
 local MakeTrap = require(Node.ActionNode.MakeTrap)
 
+local InRange = require(Node.ConditionNode.InRange)
+
+local DetectionVision = require(Node.Perception.DetectionVision)
 local Blackboard = require(Node.Utiles.Blackboard)
 
--- Définit le blackboard pour le chasseur
+-----------------------------------------------------
+-- BLACKBOARD (un seul hunter → OK global)
+-----------------------------------------------------
+
 local blackboard = Blackboard.new()
 
--- Définition de l'arbre de comportement du chasseur
+-----------------------------------------------------
+-- BEHAVIOUR TREE
+-----------------------------------------------------
+
 local BT2 = WeightedSelector.new({
 
-	-- =========================
-	-- COMBAT
-	-- =========================
+	-- ================= COMBAT =================
+
 	{
 		nom = "AttaquePied",
 		weight = function()
@@ -74,11 +74,7 @@ local BT2 = WeightedSelector.new({
 		node = FollowTarget.new(),
 	},
 
-	
-
-	-- =========================
-	-- LOGISTIQUE / SURVIE
-	-- =========================
+	-- ================= LOGISTIQUE =================
 
 	{
 		nom = "Recharge",
@@ -107,7 +103,7 @@ local BT2 = WeightedSelector.new({
 		end,
 		block = false,
 		priority = 1,
-		node = FollowTarget.new()
+		node = FollowTarget.new(),
 	},
 
 	{
@@ -117,13 +113,11 @@ local BT2 = WeightedSelector.new({
 		end,
 		block = true,
 		priority = 2,
-		node = MakeTrap.new()
+		node = MakeTrap.new(),
 	},
 
+	-- ================= EXPLORATION =================
 
-	-- =========================
-	-- EXPLORATION
-	-- =========================
 	{
 		nom = "Exploration",
 		weight = function()
@@ -135,42 +129,69 @@ local BT2 = WeightedSelector.new({
 	},
 })
 
+-----------------------------------------------------
+-- POIDS
+-----------------------------------------------------
 
-local function CalculePoids(hunter, blackboard)
-	local poids = HunterUtility.CalculePoids(hunter, blackboard) -- recalcule les poids en fonction de la situation actuelle
+local function CalculePoids(hunter)
+	local poids = HunterUtility.CalculePoids(hunter, blackboard)
 	blackboard:SetPoids(poids)
 end
 
-
 local delay = 0.25
 local lastUpdate = 0
-local function UpdatePoids(hunter, blackboard)
+
+local function UpdatePoids(hunter)
 	if (tick() - lastUpdate) < delay then
 		return
 	end
+
 	lastUpdate = tick()
-	blackboard:UpdatePerception(hunter) -- met à jour les données de perception (distance, vie, etc.)
-	CalculePoids(hunter, blackboard) -- recalcule les poids en fonction de la situation actuelle
+
+	blackboard:UpdatePerception(hunter)
+	CalculePoids(hunter)
 end
 
+-----------------------------------------------------
+-- PERCEPTION
+-----------------------------------------------------
+
 local PerceptionVision = DetectionVision.new(200)
+
 local function PerceptionUpdate(hunter)
 	PerceptionVision:Run(hunter, blackboard)
 end
 
+-----------------------------------------------------
+-- START / STOP
+-----------------------------------------------------
 
 local connexion = nil
+
 function HunterBT.Start(hunter)
+
+	if connexion then
+		connexion:Disconnect()
+	end
+
 	connexion = RunService.Heartbeat:Connect(function()
-		UpdatePoids(hunter, blackboard)
+
+		if not hunter or not hunter.Root then
+			return
+		end
+
+		UpdatePoids(hunter)
 		PerceptionUpdate(hunter)
 		BT2:Run(hunter, blackboard)
+
 	end)
 end
 
 function HunterBT.Stop()
-	connexion:Disconnect()
+	if connexion then
+		connexion:Disconnect()
+		connexion = nil
+	end
 end
-
 
 return HunterBT

@@ -134,13 +134,7 @@ RunService.RenderStepped:Connect(function(dt)
         end
     end
 
-     -- Si assis → on se lève
-    if jumpRequested and humanoid:GetState() == Enum.HumanoidStateType.Seated then
-        humanoid.Sit = false
-        humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
-        print("UP")
-        return
-    end
+
     if IsGrounded() and wasGrounded and jumpRequested and jumpCooldown <= 0 then    
         Jump() 
     end
@@ -175,7 +169,7 @@ RunService.RenderStepped:Connect(function(dt)
     -- =====================================================
 
     local camera = workspace.CurrentCamera
-    local rabbitBot = workspace:FindFirstChild("rabbitbot")
+    local rabbitBot = workspace:FindFirstChild("")
 
     UserInputService.InputBegan:Connect(function(input, gp)
         if gp then return end
