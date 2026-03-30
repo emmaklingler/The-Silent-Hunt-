@@ -22,7 +22,44 @@ function RabbitBT:Start()
             return
         end
 
-        -- Toutes les 3 secondes on change de destination
+        local hunterModel = workspace:FindFirstChild("Hunter")
+
+        -- =========================
+        -- DETECTION HUNTER
+        -- =========================
+        if hunterModel then
+            local hunterRoot = hunterModel:FindFirstChild("HumanoidRootPart")
+
+            if hunterRoot then
+                local canSee = self.rabbit:CanSeeHunter(hunterRoot)
+
+                if canSee then
+                    print("👁️ [Rabbit] Hunter DETECTED")
+
+                    self.rabbit.Stress = math.clamp(self.rabbit.Stress + 10, 0, 100)
+
+                    local result = self.rabbit:TryFlee(hunterRoot.Position)
+
+                    print("🏃 [Rabbit] Fleeing... state:", result)
+
+                    if math.random() < 0.2 then
+                        print("🐰 [Rabbit] PANIC JUMP")
+                        self.rabbit:Jump()
+                    end
+
+                    return -- PRIORITÉ fuite
+                else
+                    -- debug vision
+                    --print("👁️ [Rabbit] Hunter NOT in vision")
+                end
+            end
+        else
+            print("⚠️ [Rabbit] Hunter NOT FOUND")
+        end
+
+        -- =========================
+        -- COMPORTEMENT NORMAL
+        -- =========================
         if os.clock() >= self.nextMoveTime then
             self.nextMoveTime = os.clock() + 3
 
@@ -34,19 +71,17 @@ function RabbitBT:Start()
 
             local target = self.rabbit.Root.Position + randomOffset
 
-            print("🐰 Rabbit moving to:", target)
-            
+            print("🐰 [Rabbit] Wandering to:", target)
+
+            -- rotation vers la cible (IMPORTANT pour FOV)
+            self.rabbit.Root.CFrame = CFrame.lookAt(
+                self.rabbit.Root.Position,
+                target
+            )
+
+            self.rabbit.Humanoid.WalkSpeed = self.rabbit.normalSpeed
             self.rabbit.Humanoid:MoveTo(target)
         end
 
     end)
 end
-
-function RabbitBT:Stop()
-    if self.connection then
-        self.connection:Disconnect()
-        self.connection = nil
-    end
-end
-
-return RabbitBT

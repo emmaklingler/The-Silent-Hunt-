@@ -135,4 +135,67 @@ function RabbitBot:Jump()
 	self.jumpCooldown = os.clock() + 1
 end
 
+function RabbitBot:CanSeeHunter(hunterRoot)
+	if not hunterRoot or not self.Root then
+		print("❌ [RabbitVision] Missing hunterRoot or self.Root")
+		return false
+	end
+
+	local direction = (hunterRoot.Position - self.Root.Position)
+	local distance = direction.Magnitude
+
+	-- =========================
+	-- DISTANCE CHECK
+	-- =========================
+	if distance > self.panicRadius then
+		print("📏 [RabbitVision] Too far:", math.floor(distance))
+		return false
+	end
+
+	direction = direction.Unit
+
+	-- =========================
+	-- FOV CHECK
+	-- =========================
+	local forward = self.Root.CFrame.LookVector
+	local dot = forward:Dot(direction)
+
+	if dot < 0.5 then
+		print("👁️ [RabbitVision] Outside FOV | dot:", string.format("%.2f", dot))
+		return false
+	end
+
+	-- =========================
+	-- RAYCAST CHECK
+	-- =========================
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { self.Model }
+
+	local result = workspace:Raycast(
+		self.Root.Position,
+		direction * distance,
+		params
+	)
+
+	if result then
+		local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
+
+		if hitModel ~= hunterRoot.Parent then
+			print("🧱 [RabbitVision] Blocked by:", result.Instance.Name)
+			return false
+		else
+			print("🎯 [RabbitVision] Raycast HIT hunter ✔")
+		end
+	else
+		print("⚠️ [RabbitVision] No raycast hit (edge case)")
+	end
+
+	-- =========================
+	-- SUCCESS
+	-- =========================
+	print("✅ [RabbitVision] Hunter visible")
+	return true
+end
+
 return RabbitBot
