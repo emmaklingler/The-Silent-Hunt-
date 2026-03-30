@@ -1,6 +1,7 @@
 local RunService = game:GetService("RunService") 
 local Players = game:GetService("Players") 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer 
 local character = player.Character or player.CharacterAdded:Wait() 
@@ -34,6 +35,30 @@ jumpTrack.Looped = false
 runTrack.Looped = true
 
 
+-- Pour le jump : 
+local jumpRequested = false 
+local jumpConnection = nil
+
+local function SetupMobileJump()
+	local playerGui = player:WaitForChild("PlayerGui")
+	local HUD = playerGui:WaitForChild("HUD")
+	local JumpButton = HUD:WaitForChild("Button"):WaitForChild("Jump")
+
+	if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+		JumpButton.Visible = true
+	else
+		JumpButton.Visible = false
+	end
+
+	if jumpConnection then
+		jumpConnection:Disconnect()
+	end
+
+	jumpConnection = JumpButton.Activated:Connect(function()
+		jumpRequested = true
+	end)
+end
+
 -- Remets le bon humanoid si le joueur spawn à nouveau 
 player.CharacterAdded:Connect(function(char) 
     isAlive = true
@@ -42,6 +67,10 @@ player.CharacterAdded:Connect(function(char)
     animator = humanoid:WaitForChild("Animator") 
 
     humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false) 
+   
+
+     -- Animations 138414084300181
+
 
     idleTrack = animator:LoadAnimation(idleAnim) 
     jumpTrack = animator:LoadAnimation(jumpAnim) 
@@ -49,6 +78,8 @@ player.CharacterAdded:Connect(function(char)
     idleTrack.Looped = false
     jumpTrack.Looped = false
     runTrack.Looped = true
+    
+    SetupMobileJump()
 end)
 
 
@@ -63,6 +94,7 @@ LifeChangeEvent.OnClientEvent:Connect(function(newLife)
         deadTrack:Play()
     end
 end)
+
 
 
 --///////////////////////////////////////////////////////////////////////////////////
@@ -107,16 +139,14 @@ local function Jump()
     end)
 end
 
--- Pour le jump : 
-local UserInputService = game:GetService("UserInputService") 
-local jumpRequested = false 
 -- Si on appuie sur espace le jeu demande un saut
 UserInputService.InputBegan:Connect(function(input, gp) 
     if gp then return end 
     if input.KeyCode == Enum.KeyCode.Space then 
         jumpRequested = true 
     end 
-end) 
+end)
+
 
 -- Boucle principale
 RunService.RenderStepped:Connect(function(dt)
@@ -162,35 +192,6 @@ RunService.RenderStepped:Connect(function(dt)
     
     wasGrounded = IsGrounded()
     jumpRequested = false
-
-
-    -- =====================================================
-    -- DEBUG CAMERA RABBIT BOT
-    -- =====================================================
-
-    local camera = workspace.CurrentCamera
-    local rabbitBot = workspace:FindFirstChild("")
-
-    UserInputService.InputBegan:Connect(function(input, gp)
-        if gp then return end
-
-        -- B = suivre le bot
-        if input.KeyCode == Enum.KeyCode.B then
-            if rabbitBot and rabbitBot:FindFirstChild("Humanoid") then
-                print("Camera -> RabbitBot")
-                camera.CameraSubject = rabbitBot.Humanoid
-                camera.CameraType = Enum.CameraType.Custom
-            end
-        end
-
-        -- P = revenir au joueur
-        if input.KeyCode == Enum.KeyCode.P then
-            print("Camera -> Player")
-            camera.CameraSubject = humanoid
-            camera.CameraType = Enum.CameraType.Custom
-        end
-    end)
-
 end)
 
 
