@@ -1,65 +1,99 @@
-PROJET : The Silent Hunt
-Itération II – IA du chasseur
 
-1) Fonctionnalités développées
+Itération IV : Environnement & IA du lapin
+
+Fonctionnalités développées
 
 Lors de cette itération, les fonctionnalités suivantes ont été développées :
 
-- Détection du lapin par vision (raycast + champ de vision)
-- Mémorisation de la dernière position connue du lapin
-- Poursuite du lapin par pathfinding
-- Attaque au corps à corps
-- Attaque à distance avec :
-  - phase de visée
-  - vérification de ligne de vue
-  - cooldown
-  - consommation de munitions
-- Gestion d’un chargeur et d’une réserve de munitions
-- Rechargement du chargeur
-- Déplacement vers un point de ravitaillement
-- Récupération de munitions
-- Système de pièges basé sur la mémoire
-- Limitation du nombre de pièges (5 maximum)
+- Finalisation des interactions environnementales
 
+- Implémentation du terrier :
 
-2) Cas d’utilisation
+  -Cachette pour le lapin
+  -Zone de téléportation entre entrées
+  -Point de rencontre pour les lapins
+  -Système d’équilibrage
 
-CU1 – Le lapin est détecté  
-Le chasseur voit le lapin, le poursuit et tente de l’attaquer.
+-Équilibrage du terrier :
 
-CU2 – Le lapin se cache ou disparaît de la vision  
-Le chasseur conserve la dernière position connue et s’y rend.
+  -Le lapin a 3 fois plus faim
+  -5 secondes pour entrer et sortir
+  -Entrées dispersées sur la map
 
-CU3 – Le lapin repasse par une zone piégée  
-Le lapin déclenche un piège et subit des dégâts.
+-Implémentation des buissons :
+  
+  -Cachette alternative au terrier
+  -Différenciation mécanique avec le terrier
+  -Retrait de 20 points de satiété
 
-CU4 – Le chasseur n’a plus de balles dans son chargeur  
-Le chasseur recharge son arme.
+-Structuration de l’IA du lapin via un Behavior Tree
+-Création d’une classe RabbitBotClass
+-Refactorisation des nœuds existants
+-Initialisation complète du Behavior Tree
 
-CU5 – Le chasseur n’a plus aucune munition  
-Le chasseur se rend au point de ravitaillement pour se réapprovisionner.
+-Ajout de nouveaux ActionNodes :
 
+  -MangerCarotte
+  -Fuir
+  -Errer
+  -SeCacher
 
-3) Rôle des membres du groupe
+-Ajout de nouveaux ConditionNodes :
+  -ChasseurProche
+  -AFaim
+  -EstStressé
+
+-Début d’intégration du système Utility pour le chasseur :
+  -Utility Tir
+  -Utility Recharge
+  -Utility Pose de piège
+  -Normalisation des attributs entre 0 et 1
+
+-Ajout UX :
+
+  -Affichage du nom du joueur
+  -Mode spectateur après la mort
+
+-Phase de tests IA :
+
+  -Tests unitaires des ActionNodes
+  -Utilisation de Fake Hunter et Fake Blackboard
+  -Vérification des états SUCCESS / FAILURE / RUNNING
+
+-Cas d’utilisation
+
+CU1 – Le lapin détecte le chasseur
+Le lapin évalue la menace et active le nœud Fuir.
+
+CU2 – Le lapin est stressé
+Le lapin cherche une cachette (buisson ou terrier).
+
+CU3 – Le lapin entre dans un terrier
+Le lapin est téléporté vers une autre entrée après un délai.
+
+CU4 – Le joueur meurt
+Le joueur passe automatiquement en mode spectateur.
+
+- Rôle des membres du groupe :
 
 Emma :
-- Système de vision (raycasting)
-- Attaque à distance
-- Gestion des munitions
-- Rechargement
-- Ravitaillement
-- Début du système de pièges
-- Intégration dans le Behaviour Tree
+
+- Tests des ActionNodes
+- Début du Behavior Tree du lapin bot
+- Début du BT lapin
+- Participation aux réglages Utility
 
 Hugo :
-- Pathfinding
-- Multijoueur
-- Synchronisation client/serveur
-- Mort du lapin
-- Apparition des carottes
-- Sons du lapin et des carottes
-- Débogage du déplacement du lapin
+
+- Correction des bugs de connexion
+- Implémentation Utility Tir / Recharge
+- Ajout du nom joueur
+- Implémentation caméra spectateur
+- Stabilisation multijoueur
 
 Noah :
-- Animation du chasseur
-- Début du système de buissons (cachettes)
+
+- Intégration du terrier avec téléportation
+- Finalisation du terrier
+- Implémentation du buisson cachette
+- Participation Utility (tir / poser piège)
