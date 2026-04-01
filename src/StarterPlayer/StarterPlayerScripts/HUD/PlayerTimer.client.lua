@@ -7,22 +7,24 @@ local StartGameEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("St
 local Player = Players.LocalPlayer
 local PlayerGui = Player.PlayerGui
 
-local label = nil
+local bar = nil
 
 local timer = 0
+local maxTimer = 0 
 local start = false
 local last = nil
 
 StartGameEvent.OnClientEvent:Connect(function()
-	label = PlayerGui:WaitForChild("HUD").Text.Timer
+	bar = PlayerGui:WaitForChild("HUD").Time.Frame.Bar
 end)
 
 --[[
 	Affiche le timer
 ]]
 local function Update()
-	if not label then return end
-	label.Text = math.round(timer)
+	if not bar then return end
+	local progress = math.clamp(timer / maxTimer, 0, 1)
+	bar.Bar.Size = UDim2.new(progress, 0, 1, 0)
 end
 
 --[[
@@ -44,9 +46,10 @@ end
 --[[
 	Événement déclenché lorsque la valeur de temps change côté serveur
 ]]
-TimeChangeEvent.OnClientEvent:Connect(function(newTime)
+TimeChangeEvent.OnClientEvent:Connect(function(newTime, newMaxTime)
 	last = os.clock()
 	timer = newTime
+	maxTimer = newMaxTime
 	if not start then
 		-- Si pas encore démarré, lance la boucle de diminution de la timer
 		start = true
