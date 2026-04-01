@@ -1,0 +1,129 @@
+[33m4075441[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Merge branches 'main' and 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33m59bd8db[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Detection Plusieurs joueurs
+[33mcb2aed9[m Ajout timer
+[33mfa4e129[m Wind
+[33m3ccce1b[m nom de son inconnu et le chasseur ne reconnait pas les bot
+[33mf602189[m deplacement naturels du bot
+[33mbd90711[m Merge branch 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33m48667bc[m ajout cycle jour nuit
+[33m4e3bdee[m Merge branch 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33mb1faa2d[m bt bot fuite
+[33me487eb6[m Debug Connexion kick aléatoire
+[33maa8a1c8[m Mouvement sur telephone
+[33m26b0563[m Merge branch 'main' of https://github.com/emmaklingler/The-Silent-Hunt-
+[33m443ca86[m Correction Camera joueur mort
+[33m7069345[m[33m ([m[1;33mtag: [m[1;33miteration4[m[33m)[m Merge branch 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33m7746216[m ajout documents presentation
+[33m36dd75d[m Reglalge merge
+[33md02e0bc[m ajout fichiers
+[33mb0ce47d[m  pull
+[33m813bee1[m update placement des pièges
+[33m9b694ea[m Unlock Camera in Studio
+[33m19c6365[m Fix camera
+[33m844d8bb[m Merge branch 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33m6cadb34[m test et début rabbitbot
+[33md88a702[m Merge branch 'main' of https://github.com/emmaklingler/The-Silent-Hunt-
+[33m70d9590[m Update du buisson + changement utility
+[33m59fb88e[m Ajout Camera mort et NameTag
+[33mf14eb1f[m Update HunterUtility.lua
+[33m6f2b7ab[m Merge branch 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33m1a5e773[m ajout bt lapin
+[33m317c54c[m Merge branch 'main' of https://github.com/emmaklingler/The-Silent-Hunt-
+[33mcf5c623[m Update EntrerTerrier.server.lua
+[33ma1cbdc2[m Ajout NameTag et réglage temps partie
+[33md34ac79[m tests
+[33m7156947[m ajout buisson + correction terrier
+[33m0c513ed[m Debug terrier et ecran de chargement
+[33mfa74e33[m Ajout de la base des terriers
+[33mad23815[m Reglagel bug trap
+[33mec2528b[m[33m ([m[1;33mtag: [m[1;33miteration3[m[33m)[m ajout rapport
+[33md84e56a[m Réorganiser les cas d'utilisation et mettre à jour la conclusion
+[33ma2afeb4[m Update bilan.txt
+[33m6b93a9b[m ajout bilan.txt et Fontionnalite.txt pour l'tération 3
+[33m80e69ca[m Merge branch 'main' of https://github.com/emmaklingler/The-Silent-Hunt-
+[33m2170f88[m ajout piege
+[33mc268a6d[m Ajout Calcule de poids
+[33me5c1c94[m try commit
+[33m631c9aa[m Ajout lobby et modif deplacement clean
+[33m21fc322[m Merge branch 'main'
+[33ma40e19c[m Réglage viser et tire chasseur, Ajout MemorySequence
+[33mb39cf8d[m[33m ([m[1;33mtag: [m[1;33miteration2[m[33m)[m  ajout presentation
+[33m8ad4d86[m  documents bilans et fonctionnalités + schema BT
+[33m53c244a[m pose de pièges
+[33ma5e43be[m MERGE
+[33mc77aa94[m merge
+[33m6b6af2d[m Ajout temps avant tire chasseur
+[33mb91dd8b[m Diagramme de sequence iteration2
+[33m8ccee49[m Ajout LasKnownPosition blackboard
+[33m6c91bac[m Merge branch 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33mef10571[m  spawn trap basique
+[33m59c2164[m Reglage hungerSystem client server
+[33maf97e9d[m Merge branch 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33m435cbb0[m  debug 1 tir 2 balles
+[33m4cef847[m Ajout Son Client
+[33mb0c22fa[m raycast simple attaque distance et vision autour
+[33mabedf82[m raycast detectvision
+[33m8d47675[m Merge branch 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33m1dc021b[m merge
+[33m89acf8a[m WeightedSelector debug
+[33md5b6c7d[m refill point
+[33mb20422e[m correction weightselector
+[33m5b8500d[m ajout need munitions
+[33m9f79542[m tir à distance
+[33m62dd721[m retour arriere refillpoint
+[33m7222533[m refill point
+[33m0f20554[m Ajout Pathfinding
+[33mf2bb75c[m Merge branch 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33m4a1a6a8[m Update HunterMouvement.client.lua
+[33m16d0712[m buisson fonctionnel et ajout animation chasseur attackarme
+[33m38bed53[m ajout du systeme de cachette avec un buisson
+[33m4ee93ff[m Merge branch 'main' of github.com:emmaklingler/The-Silent-Hunt-
+[33mff1197a[m pathfinfing
+[33m662be26[m Ajout mort lapin
+[33mbc27c61[m ajout noeuds
+[33m1dcf965[m ajout de nouveaux noeuds
+[33m366469c[m Modification BT Attack et follow hunter propre
+[33m922548f[m Ajout Weight Selector pour du poid
+[33m06abdae[m Ajout System Spawn Carrot
+[33mf51b1b0[m ajout animation chasseur
+[33ma0b2c3a[m Ajout Debut Test
+[33me0f1dc2[m Debut mouvement lapin
+[33mc736dbf[m Ajout Commentaire + Clean BT
+[33mf83931d[m[33m ([m[1;33mtag: [m[1;33miteration1[m[33m)[m Merge hunter
+[33m043a92f[m Ajout slide présentation
+[33m884812e[m ajout bilan et fonctionnalités
+[33mc379795[m Merge branch 'main' of https://github.com/emmaklingler/The-Silent-Hunt-
+[33mf60a71a[m vie ne peut pas être en dessous de 0
+[33mb4cd391[m correction faim
+[33m77fc60c[m Merge branch 'main' of https://github.com/emmaklingler/The-Silent-Hunt-
+[33mad19e0e[m debug rotation chasseur
+[33mcde77e9[m correction faim
+[33mf2760a0[m Merge branch 'main' of https://github.com/emmaklingler/The-Silent-Hunt-
+[33m99ce59d[m Ajout pdf itération 1
+[33mb9e12ef[m Merge branch 'main' of https://github.com/emmaklingler/The-Silent-Hunt-
+[33ma7e2c8f[m bilan itération 1
+[33m96274ab[m Debut dossier Remote
+[33mf321a14[m ajout chasseur
+[33me162b2a[m debug remote
+[33m4798eb7[m debug spectacle pour suivre le chasseur
+[33mccd7bf0[m Ajout document itération1
+[33m0212088[m Merge branch 'main' of https://github.com/emmaklingler/The-Silent-Hunt-
+[33m68a43ee[m fin de la régénération de la carotte
+[33m7e13d88[m Mouvement "Bunny" en saut joueur + première personne
+[33mda1b2a2[m modif carrot
+[33m06079c4[m modification barre de faim
+[33m9cf119d[m Init Jeu, création init system Hunger
+[33m24eab1b[m Add Health + Hunger
+[33mb4dcf29[m Ajout RabbitCharacter et spawn player avec le character
+[33md1d6652[m ajout carrot
+[33macfe650[m Ajout debut initGame et playerManager
+[33mbd28dbd[m Ajout Class Rabbit (Player)
+[33m59df6b4[m Ajout ProfileService (BaseDeDonnee)
+[33m32183e3[m Delete Documents/EtudePrealable/Test
+[33mb69bacb[m Ajout EtudePréalable et Présentation
+[33m7c39655[m Ajout test file dans EtudePrealable directory
+[33m93c0dbc[m AJout projet complet
+[33mc76351d[m Merge branch 'main' of https://github.com/emmaklingler/The-Silent-Hunt-
+[33m59517eb[m Initial commit - Rojo setup
+[33m82a31b6[m ajout repertoire Documents
+[33mb8a3707[m Initial commit
