@@ -1,5 +1,6 @@
 local TimeSystem = {}
 
+local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TimeChangeEvent = ReplicatedStorage.Remote:WaitForChild("TimeChangeEvent")
@@ -12,6 +13,12 @@ local tempsMax = 150
 local eventTick = 0
 local eventFire = 100
 
+local startHour = 8
+local endHour = 20
+
+local startMinutes = startHour * 60
+local endMinutes = endHour * 60
+
 local endFunction = nil
 
 --[[
@@ -22,6 +29,7 @@ function TimeSystem:Init(players, func)
     debut = os.clock()
     endFunction = func
     TimeChangeEvent:FireAllClients(tempsEcoule)
+    Lighting:SetMinutesAfterMidnight(startMinutes)
 end
 
 
@@ -32,14 +40,23 @@ function TimeSystem:Tick(dt)
     local now = os.clock()
     local newdt = now - debut
     debut = now
+
     tempsEcoule = tempsEcoule + newdt
-    eventTick+=1
+    eventTick += 1
+
     if eventTick >= eventFire then
         eventTick = 0
         TimeChangeEvent:FireAllClients(tempsEcoule)
     end
+
+    local progress = math.clamp(tempsEcoule / tempsMax, 0, 1)
+    progress = progress * progress -- easing simple
+
+    local currentMinutes = startMinutes + (endMinutes - startMinutes) * progress
+
+    Lighting:SetMinutesAfterMidnight(currentMinutes)
+
     if tempsEcoule >= tempsMax then
-        -- Faire quelque chose lorsque le temps est écoulé
         print("Temps écoulé !")
         endFunction()
     end
