@@ -14,8 +14,6 @@
 -- local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- local Players = game:GetService("Players")
 
--- local StartEvent = ReplicatedStorage.Remote:WaitForChild("StartGameEvent")
-
 -- local GameManager = {}
 -- GameManager.__index = GameManager
 

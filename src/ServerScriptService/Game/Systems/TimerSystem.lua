@@ -5,6 +5,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TimeChangeEvent = ReplicatedStorage.Remote:WaitForChild("TimeChangeEvent")
 local PlayerDeadEvent = ReplicatedStorage.Remote:WaitForChild("PlayerDeadServerEvent")
+local PlayerDeadClientEvent = ReplicatedStorage.Remote:WaitForChild("PlayerDeadClientEvent")
 
 local debut = os.clock()
 local tempsEcoule = 0
@@ -65,6 +66,7 @@ end
 local nbDead = 0
 PlayerDeadEvent.Event:Connect(function(player)
     nbDead += 1
+    PlayerDeadClientEvent:FireAllClients(#Players:GetPlayers() - nbDead)
     if nbDead >= #Players:GetPlayers() then
         print("Tous les joueurs sont morts !")
         endFunction()
