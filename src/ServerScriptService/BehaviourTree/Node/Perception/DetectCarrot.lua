@@ -1,21 +1,21 @@
 local DetectCarrot = {}
 DetectCarrot.__index = DetectCarrot
 
+local folder = game.Workspace:WaitForChild("Carrot")
+
 function DetectCarrot.new(radius)
     local self = setmetatable({}, DetectCarrot)
     self.radius = radius or 50
     return self
 end
 
-function DetectCarrot:Run(rabbit, blackboard)
+function DetectCarrot:Run(rabbit, blackboard)   
 
-    for _, carrot in pairs(workspace:GetChildren()) do
-        if carrot.Name == "Carrot" then
-            local dist = (rabbit.Root.Position - carrot.Position).Magnitude
+    for _, carrot in folder:GetChildren() do
+        local dist = (rabbit.Root.Position - carrot.Position).Magnitude
 
-            if dist < self.radius then
-                blackboard:SetCarrotPosition(carrot.Position)
-            end
+        if dist < self.radius then
+            blackboard:SetCarrotPosition(carrot.Position)
         end
     end
 end

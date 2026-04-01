@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local EatCarrotEvent = ReplicatedStorage.Remote:WaitForChild("EatCarrotEvent")
 local CreateCarrotEvent = ReplicatedStorage.Remote:WaitForChild("CreateCarrotEvent")
 
+local CarrotFolder = workspace:WaitForChild("Carrot")
 local Carrot = game.ServerStorage.Asset:WaitForChild("Carrot")
 local CarrotSpawn = workspace:WaitForChild("CarrotSpawn")
 
@@ -45,7 +46,7 @@ local function spawnCarrot(position)
     clone.Name = "Carrot"..id
     id+=1
     clone.Position = position
-    clone.Parent = workspace
+    clone.Parent = CarrotFolder
     
     totaleCarrot+=1
     

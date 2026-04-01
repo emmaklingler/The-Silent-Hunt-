@@ -54,6 +54,7 @@ end)
 
 --Si le joueur meurt, on affiche la caméra de mort
 LifeEvent.OnClientEvent:Connect(function(lifeValue)
+    print(lifeValue)
     if lifeValue <= 0 then
         GUIVie.Enabled = false
         GUICamera.Enabled = true

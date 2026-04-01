@@ -14,6 +14,7 @@ function EatCarrot:Run(rabbit, blackboard)
     end
 
     local carrot = blackboard.closestCarrot
+   
     local distance = (rabbit.Root.Position - carrot.Position).Magnitude
 
     -- ÉTAPE 1 : Se déplacer vers la carotte si on est trop loin
@@ -22,7 +23,7 @@ function EatCarrot:Run(rabbit, blackboard)
         rabbit.Humanoid:MoveTo(carrot.Position)
         return Status.RUNNING
     end
-
+    
     -- ÉTAPE 2 : On est arrivé ! On déclenche l'action de manger
     -- On utilise une fonction dans RabbitBotClass pour gérer la disparition de la carotte
     local success = rabbit:ActionEat(carrot)

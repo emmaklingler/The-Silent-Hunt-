@@ -24,7 +24,6 @@ function RabbitBot.new(model)
     end)
     
     -- Empêche le bot de "coller" au sol (ajuste la valeur selon la taille du modèle)
-    self.Humanoid.HipHeight = 1.2 
     self.Humanoid.AutoRotate = true
 
     -- Stats vitales
@@ -110,14 +109,11 @@ function RabbitBot:GetNearestCarrot()
     local shortestDistance = math.huge
 
     -- On boucle sur les enfants du dossier uniquement
-    for _, child in ipairs(spawnsFolder:GetChildren()) do
-        -- On vérifie que c'est bien une Part et pas le dossier lui-même
-        if child:IsA("BasePart") then
-            local distance = (self.Root.Position - child.Position).Magnitude
-            if distance < shortestDistance then
-                shortestDistance = distance
-                closestCarrot = child -- C'est bien la carotte individuelle ici
-            end
+    for _, child in spawnsFolder:GetChildren() do
+        local distance = (self.Root.Position - child.Position).Magnitude
+        if distance < shortestDistance then
+            shortestDistance = distance
+            closestCarrot = child -- C'est bien la carotte individuelle ici
         end
     end
 
@@ -174,18 +170,15 @@ end
 
 function RabbitBot:ActionEat(carrotPart)
     if not carrotPart or not carrotPart.Parent then return false end
-
-    -- On force l'arrêt des pattes
+    
     self:ChangeState("Idle")
 
-    -- On appelle la logique de destruction définie dans le gestionnaire
-    if _G.BotEatCarrot then
-        _G.BotEatCarrot(self, carrotPart)
-    else
-        -- Backup si _G n'est pas encore chargé
-        carrotPart:Destroy()
-        self.Satiety = 100
-    end
+    print(carrotPart)
+
+    carrotPart:Destroy()
+
+    self.Satiety = 100
+
 
     print("🐰 [MIAM] Le lapin a fini de manger.")
     return true
