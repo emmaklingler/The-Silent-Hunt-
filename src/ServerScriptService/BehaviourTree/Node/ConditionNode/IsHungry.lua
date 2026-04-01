@@ -7,8 +7,11 @@ function IsHungry.new()
 end
 
 function IsHungry:Run(rabbit)
-    local satiety = rabbit.Satiety or 100
-    return (satiety < 40) and Status.SUCCESS or Status.FAILURE
+    -- On considère qu'il a faim s'il est en dessous de 70%
+    if rabbit.Satiety < 70 then
+        return Status.SUCCESS
+    end
+    return Status.FAILURE
 end
 
 return IsHungry

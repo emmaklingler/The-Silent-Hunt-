@@ -4,7 +4,7 @@ RabbitBot.__index = RabbitBot
 local PathfindingService = game:GetService("PathfindingService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
-
+local SoundManager = require(game.ServerScriptService.Sound.SoundManager)
 -- On récupère l'event pour les animations
 local ChangeStateRabbitEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateRabbitEvent")
 
@@ -99,7 +99,30 @@ function RabbitBot:IsGrounded()
     return self.Humanoid.FloorMaterial ~= Enum.Material.Air
 end
 
--- À AJOUTER DANS RabbitBot.lua
+-- À ajouter dans ton fichier RabbitBot.lua actuel
+
+-- Scanne le dossier CarrotSpawn et trouve la carotte la plus proche
+function RabbitBot:GetNearestCarrot()
+    local spawnsFolder = workspace:FindFirstChild("CarrotSpawn")
+    if not spawnsFolder then return nil end
+
+    local closestCarrot = nil
+    local shortestDistance = math.huge
+
+    -- On boucle sur les enfants du dossier uniquement
+    for _, child in ipairs(spawnsFolder:GetChildren()) do
+        -- On vérifie que c'est bien une Part et pas le dossier lui-même
+        if child:IsA("BasePart") then
+            local distance = (self.Root.Position - child.Position).Magnitude
+            if distance < shortestDistance then
+                shortestDistance = distance
+                closestCarrot = child -- C'est bien la carotte individuelle ici
+            end
+        end
+    end
+
+    return closestCarrot
+end
 function RabbitBot:Follow(targetPosition)
     if not targetPosition then return Status.FAILURE end
 
@@ -147,6 +170,28 @@ function RabbitBot:Jump()
         end
     end)
 end
+
+
+function RabbitBot:ActionEat(carrotPart)
+    if not carrotPart or not carrotPart.Parent then return false end
+
+    -- On force l'arrêt des pattes
+    self:ChangeState("Idle")
+
+    -- On appelle la logique de destruction définie dans le gestionnaire
+    if _G.BotEatCarrot then
+        _G.BotEatCarrot(self, carrotPart)
+    else
+        -- Backup si _G n'est pas encore chargé
+        carrotPart:Destroy()
+        self.Satiety = 100
+    end
+
+    print("🐰 [MIAM] Le lapin a fini de manger.")
+    return true
+end
+
+
 
 function RabbitBot:CanSeeHunter(hunterRoot)
     if not hunterRoot or not self.Root then return false end
