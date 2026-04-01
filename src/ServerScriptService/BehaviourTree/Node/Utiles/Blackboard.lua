@@ -16,6 +16,8 @@ function Blackboard.new()
 	self.state = "Idle"
 
     self.target = nil       
+	self.targetLockTime = 0
+	self.targetLockDuration = 3
 
 	self.lastKnownPosition = nil   
 
