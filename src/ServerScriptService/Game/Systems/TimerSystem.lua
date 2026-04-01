@@ -28,7 +28,7 @@ local endFunction = nil
 function TimeSystem:Init(players, func)
     debut = os.clock()
     endFunction = func
-    TimeChangeEvent:FireAllClients(tempsEcoule)
+    TimeChangeEvent:FireAllClients(tempsEcoule, tempsMax)
     Lighting:SetMinutesAfterMidnight(startMinutes)
 end
 
@@ -46,7 +46,7 @@ function TimeSystem:Tick(dt)
 
     if eventTick >= eventFire then
         eventTick = 0
-        TimeChangeEvent:FireAllClients(tempsEcoule)
+        TimeChangeEvent:FireAllClients(tempsEcoule, tempsMax)
     end
 
     local progress = math.clamp(tempsEcoule / tempsMax, 0, 1)
