@@ -6,20 +6,22 @@ local Status = require(script.Parent.Parent.Utiles.Status)
 function Flee.new()
     return setmetatable({}, Flee)
 end
---[[
-    Noeud Flee: fait fuir le lapin du chasseur
-    @param rabbit: classe du lapin
-    @param blackboard: table de données partagées
-    @return Status.SUCCESS si le lapin est en train de fuir, Status.FAILURE sinon
-]]
 
 function Flee:Run(rabbit, blackboard)
-
+    -- Sécurité : si on n'a pas la position du chasseur, on ne peut pas fuir
     if not blackboard.hunterPosition then
         return Status.FAILURE
     end
 
-    return rabbit:TryFlee(blackboard.hunterPosition)
+    -- On déclenche la logique de fuite physique
+    local result = rabbit:TryFlee(blackboard.hunterPosition)
+
+    -- SI LE RÉSULTAT EST "RUNNING", ON FORCE L'ANIMATION
+    if result == Status.RUNNING then
+        rabbit:ChangeState("Running")
+    end
+
+    return result
 end
 
 return Flee

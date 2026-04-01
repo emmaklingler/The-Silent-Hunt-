@@ -2,200 +2,172 @@ local RabbitBot = {}
 RabbitBot.__index = RabbitBot
 
 local PathfindingService = game:GetService("PathfindingService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
+
+-- On récupère l'event pour les animations
+local ChangeStateRabbitEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateRabbitEvent")
 
 function RabbitBot.new(model)
     local self = setmetatable({}, RabbitBot)
 
-    -- =============================
-    -- Références modèle
-    -- =============================
     self.Model = model
     self.Humanoid = model:WaitForChild("Humanoid")
     self.Root = model:WaitForChild("HumanoidRootPart")
 
     -- =============================
-    -- Stats vitales
+    -- FIX PHYSIQUE ET RESEAU
     -- =============================
+    -- On s'assure que le serveur gère la physique pour éviter les saccades
+    local success, err = pcall(function()
+        self.Root:SetNetworkOwner(nil)
+    end)
+    
+    -- Empêche le bot de "coller" au sol (ajuste la valeur selon la taille du modèle)
+    self.Humanoid.HipHeight = 1.2 
+    self.Humanoid.AutoRotate = true
+
+    -- Stats vitales
     self.MaxHealth = 100
     self.Health = self.MaxHealth
     self.Satiety = 100
     self.Stress = 0
 
-    -- =============================
     -- Paramètres IA
-    -- =============================
     self.panicRadius = 60
     self.fleeDistance = 80
     self.fleeSpeed = 28
     self.normalSpeed = 16
     self.fleeDuration = 3
 
-    -- =============================
     -- États internes
-    -- =============================
     self.state = "Idle"
     self.fleeState = nil
-    self.pathState = nil
-
-    self.poidStat = {
-        survie = 1,
-        faim = 1,
-        fatigue = 0,
-    }
-
     self.jumpCooldown = 0
-    self.jumpForce = 80
-    self.upForce = 40
-
-
+    self.jumpForce = 60 -- Un peu réduit pour plus de réalisme
+    self.upForce = 35
 
     return self
 end
 
 function RabbitBot:TryFlee(hunterPosition)
+    if not self.Root or not hunterPosition then
+        return Status.FAILURE
+    end
 
-	if not self.Root or not hunterPosition then
-		return Status.FAILURE
-	end
+    if self.fleeState then
+        if math.random() < 0.08 then
+            self:Jump()
+        end
 
-	-- ======================
-	-- Fuite déjà en cours
-	-- ======================
-	if self.fleeState then
+        if os.clock() >= self.fleeState.endTime then
+            self.fleeState = nil
+            self.Humanoid.WalkSpeed = self.normalSpeed
+            self:ChangeState("Idle")
+            return Status.SUCCESS
+        end
+        return Status.RUNNING
+    end
 
-		-- saut aléatoire pendant la fuite
-		if math.random() < 0.08 then
-			self:Jump()
-		end
+    local direction = (self.Root.Position - hunterPosition)
+    if direction.Magnitude == 0 then return Status.FAILURE end
 
-		if os.clock() >= self.fleeState.endTime then
-			self.fleeState = nil
-			self.Humanoid.WalkSpeed = self.normalSpeed
-			self:ChangeState("Idle")
-			return Status.SUCCESS
-		end
+    direction = direction.Unit
+    local fleeTarget = self.Root.Position + direction * self.fleeDistance
 
-		return Status.RUNNING
-	end
+    self.fleeState = {
+        endTime = os.clock() + self.fleeDuration
+    }
 
-	-- ======================
-	-- Début fuite
-	-- ======================
-	local direction = (self.Root.Position - hunterPosition)
+    self.Humanoid.WalkSpeed = self.fleeSpeed
+    self.Humanoid:MoveTo(fleeTarget)
+    self:ChangeState("Running") -- "Running" au lieu de "Flee" pour correspondre aux anims
 
-	if direction.Magnitude == 0 then
-		return Status.FAILURE
-	end
-
-	direction = direction.Unit
-
-	local fleeTarget = self.Root.Position + direction * self.fleeDistance
-
-	self.fleeState = {
-		endTime = os.clock() + self.fleeDuration
-	}
-
-	self.Humanoid.WalkSpeed = self.fleeSpeed
-	self.Humanoid:MoveTo(fleeTarget)
-	self:ChangeState("Flee")
-
-	-- premier saut panique
-	self:Jump()
-
-	return Status.RUNNING
+    self:Jump()
+    return Status.RUNNING
 end
-
 
 function RabbitBot:ChangeState(state)
-    if self.state ~= state then
-        print("[Rabbit] State:", self.state, "->", state)
-        self.state = state
-    end
+    if self.state == state then return end
+    self.state = state
+    
+    -- On prévient tous les clients que CE bot change d'état
+    ChangeStateRabbitEvent:FireAllClients(self.Model, state)
 end
-
 
 function RabbitBot:IsGrounded()
-	return self.Humanoid.FloorMaterial ~= Enum.Material.Air
+    return self.Humanoid.FloorMaterial ~= Enum.Material.Air
 end
 
+-- À AJOUTER DANS RabbitBot.lua
+function RabbitBot:Follow(targetPosition)
+    if not targetPosition then return Status.FAILURE end
+
+    -- 1. ORDRE PHYSIQUE
+    self.Humanoid:MoveTo(targetPosition)
+    
+    -- 2. ORDRE D'ANIMATION (Le remède à la glissade)
+    -- On vérifie si le lapin est censé bouger
+    if (targetPosition - self.Root.Position).Magnitude > 2 then
+        self:ChangeState("Running")
+    end
+
+    -- 3. VÉRIFICATION D'ARRIVÉE
+    -- Si le lapin s'arrête de lui-même (cible atteinte)
+    if self.Humanoid.MoveDirection.Magnitude == 0 then
+        self:ChangeState("Idle")
+        return Status.SUCCESS
+    end
+
+    return Status.RUNNING
+end
 function RabbitBot:Jump()
-	if not self:IsGrounded() then return end
-	if self.jumpCooldown > os.clock() then return end
+    if not self:IsGrounded() or os.clock() < self.jumpCooldown then return end
 
-	local hrp = self.Root
-	local dir = hrp.CFrame.LookVector
+    self:ChangeState("Jumping")
+    
+    local hrp = self.Root
+    local dir = hrp.CFrame.LookVector
+    local mass = hrp.AssemblyMass
 
-	hrp:ApplyImpulse(Vector3.new(
-		dir.X * self.jumpForce * hrp.AssemblyMass,
-		self.upForce * hrp.AssemblyMass,
-		dir.Z * self.jumpForce * hrp.AssemblyMass
-	))
+    hrp:ApplyImpulse(Vector3.new(
+        dir.X * self.jumpForce * mass,
+        self.upForce * mass,
+        dir.Z * self.jumpForce * mass
+    ))
 
-	self.jumpCooldown = os.clock() + 1
+    self.jumpCooldown = os.clock() + 1.5
+    
+    -- Retour à l'état précédent après le saut
+    task.delay(0.8, function()
+        if self.Humanoid.MoveDirection.Magnitude > 0 then
+            self:ChangeState("Running")
+        else
+            self:ChangeState("Idle")
+        end
+    end)
 end
 
 function RabbitBot:CanSeeHunter(hunterRoot)
-	if not hunterRoot or not self.Root then
-		print("❌ [RabbitVision] Missing hunterRoot or self.Root")
-		return false
-	end
+    if not hunterRoot or not self.Root then return false end
 
-	local direction = (hunterRoot.Position - self.Root.Position)
-	local distance = direction.Magnitude
+    local direction = (hunterRoot.Position - self.Root.Position)
+    local distance = direction.Magnitude
 
-	-- =========================
-	-- DISTANCE CHECK
-	-- =========================
-	if distance > self.panicRadius then
-		print("📏 [RabbitVision] Too far:", math.floor(distance))
-		return false
-	end
+    if distance > self.panicRadius then return false end
 
-	direction = direction.Unit
+    -- Raycast pour vérifier les murs
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = { self.Model }
 
-	-- =========================
-	-- FOV CHECK
-	-- =========================
-	local forward = self.Root.CFrame.LookVector
-	local dot = forward:Dot(direction)
+    local result = workspace:Raycast(self.Root.Position, direction.Unit * distance, params)
 
-	if dot < 0.5 then
-		print("👁️ [RabbitVision] Outside FOV | dot:", string.format("%.2f", dot))
-		return false
-	end
-
-	-- =========================
-	-- RAYCAST CHECK
-	-- =========================
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { self.Model }
-
-	local result = workspace:Raycast(
-		self.Root.Position,
-		direction * distance,
-		params
-	)
-
-	if result then
-		local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
-
-		if hitModel ~= hunterRoot.Parent then
-			print("🧱 [RabbitVision] Blocked by:", result.Instance.Name)
-			return false
-		else
-			print("🎯 [RabbitVision] Raycast HIT hunter ✔")
-		end
-	else
-		print("⚠️ [RabbitVision] No raycast hit (edge case)")
-	end
-
-	-- =========================
-	-- SUCCESS
-	-- =========================
-	print("✅ [RabbitVision] Hunter visible")
-	return true
+    if result then
+        local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
+        return hitModel == hunterRoot.Parent
+    end
+    return true
 end
 
 return RabbitBot

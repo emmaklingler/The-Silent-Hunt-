@@ -1,158 +1,181 @@
-local PlayerManager = require(game.ServerScriptService.Player.PlayerManager)
+-- local PlayerManager = require(game.ServerScriptService.Player.PlayerManager)
 
-local HungerSystem = require(game.ServerScriptService.Game.Systems.HungerSystem)
-local TimerSystem = require(game.ServerScriptService.Game.Systems.TimerSystem)
-local System = require(game.ServerScriptService.Game.Systems.System)
+-- local HungerSystem = require(game.ServerScriptService.Game.Systems.HungerSystem)
+-- local TimerSystem = require(game.ServerScriptService.Game.Systems.TimerSystem)
+-- local System = require(game.ServerScriptService.Game.Systems.System)
 
-local HunterClass = require(game.ServerScriptService.Hunter.HunterClass)
-local HunterBT = require(game.ServerScriptService.Hunter.HunterBT.HunterBT)
+-- local HunterClass = require(game.ServerScriptService.Hunter.HunterClass)
+-- local HunterBT = require(game.ServerScriptService.Hunter.HunterBT.HunterBT)
 
-local RabbitBotClass = require(game.ServerScriptService.RabbitBot.RabbitBotClass)
-local RabbitBT = require(game.ServerScriptService.RabbitBot.RabbitBT)
+-- local RabbitBotClass = require(game.ServerScriptService.RabbitBot.RabbitBotClass)
+-- local RabbitBT = require(game.ServerScriptService.RabbitBot.RabbitBT)
 
-local TeleportService = game:GetService("TeleportService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
+-- local TeleportService = game:GetService("TeleportService")
+-- local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- local Players = game:GetService("Players")
 
-local StartEvent = ReplicatedStorage.Remote:WaitForChild("StartGameEvent")
+-- local StartEvent = ReplicatedStorage.Remote:WaitForChild("StartGameEvent")
 
-local GameManager = {}
-GameManager.__index = GameManager
+-- local GameManager = {}
+-- GameManager.__index = GameManager
 
-GameManager.State = "Lobby"
+-- GameManager.State = "Lobby"
 
---------------------------------------------------------
--- TELEPORT
---------------------------------------------------------
+-- --------------------------------------------------------
+-- -- TELEPORT
+-- --------------------------------------------------------
 
-local function ToMenu()
-	local PLACE_ID = 70426492448163
-	print("Teleporting players...")
+-- local function ToMenu()
+-- 	local PLACE_ID = 70426492448163
+-- 	print("Teleporting players...")
 
-	TeleportService:TeleportPartyAsync(
-		PLACE_ID,
-		Players:GetPlayers()
-	)
-end
+-- 	TeleportService:TeleportPartyAsync(
+-- 		PLACE_ID,
+-- 		Players:GetPlayers()
+-- 	)
+-- end
 
---------------------------------------------------------
--- START GAME
---------------------------------------------------------
+-- --------------------------------------------------------
+-- -- START GAME
+-- --------------------------------------------------------
 
-function GameManager:StartGame(teleportData)
+-- function GameManager:StartGame(teleportData)
 
-	if GameManager.State ~= "Lobby" then
-		warn("StartGame appelé alors que pas en Lobby")
-		return false
-	end
+-- 	if GameManager.State ~= "Lobby" then
+-- 		warn("StartGame appelé alors que pas en Lobby")
+-- 		return false
+-- 	end
 
-	GameManager.State = "InGame"
-	GameManager.data = teleportData
+-- 	GameManager.State = "InGame"
+-- 	GameManager.data = teleportData
 
-	print("=== START GAME ===")
+-- 	print("=== START GAME ===")
 
-	----------------------------------------------------
-	-- INIT SYSTEMES
-	----------------------------------------------------
+-- 	----------------------------------------------------
+-- 	-- INIT SYSTEMES
+-- 	----------------------------------------------------
 
-	HungerSystem:Init(PlayerManager:GetAllRabbits())
-	TimerSystem:Init(PlayerManager:GetAllRabbits(), GameManager.EndGame)
+-- 	HungerSystem:Init(PlayerManager:GetAllRabbits())
+-- 	TimerSystem:Init(PlayerManager:GetAllRabbits(), GameManager.EndGame)
 
-	task.spawn(function()
-		System:Start()
-	end)
+-- 	task.spawn(function()
+-- 		System:Start()
+-- 	end)
 
-	----------------------------------------------------
-	-- SPAWN JOUEURS
-	----------------------------------------------------
+-- 	----------------------------------------------------
+-- 	-- SPAWN JOUEURS
+-- 	----------------------------------------------------
 
-	for _, rabbit in PlayerManager:GetAllRabbits() do
-		rabbit:Spawn()
-	end
+-- 	for _, rabbit in PlayerManager:GetAllRabbits() do
+-- 		rabbit:Spawn()
+-- 	end
 
-	print("Players spawned")
+-- 	print("Players spawned")
 
-	----------------------------------------------------
-	-- SPAWN HUNTER
-	----------------------------------------------------
+-- 	----------------------------------------------------
+-- 	-- SPAWN HUNTER
+-- 	----------------------------------------------------
 
-	local HunterModel = workspace:FindFirstChild("Chasseur_Test")
-	if not HunterModel then
-		warn("Chasseur_Test introuvable dans workspace")
-		return false
-	end
+-- 	local HunterModel = workspace:FindFirstChild("Chasseur_Test")
+-- 	if not HunterModel then
+-- 		warn("Chasseur_Test introuvable dans workspace")
+-- 		return false
+-- 	end
 
-	local Hunter = HunterClass.new(HunterModel)
-	HunterBT.Start(Hunter)
+-- 	local Hunter = HunterClass.new(HunterModel)
+-- 	HunterBT.Start(Hunter)
 
-	print("Hunter started")
+-- 	print("Hunter started")
 
-    ----------------------------------------------------
-    -- SPAWN RABBIT BOT IA (TEST SIMPLE)
-    ----------------------------------------------------
+--     ----------------------------------------------------
+--     -- SPAWN RABBIT BOT IA (TEST SIMPLE)
+--     ----------------------------------------------------
 
-   ----------------------------------------------------
-    -- SPAWN RABBIT BOT IA
-    ----------------------------------------------------
+--    ----------------------------------------------------
+--     -- SPAWN RABBIT BOT IA
+--     ----------------------------------------------------
 
-    local rabbitTemplate = game.ServerStorage:WaitForChild("Asset"):WaitForChild("rabbitbot")
+--     local rabbitTemplate = game.ServerStorage:WaitForChild("Asset"):WaitForChild("rabbitbot")
 
-    local rabbitBotModel = rabbitTemplate:Clone()
-    rabbitBotModel.Name = "RabbitBot"
-    rabbitBotModel.Parent = workspace
+--     local rabbitBotModel = rabbitTemplate:Clone()
+--     rabbitBotModel.Name = "RabbitBot"
+--     rabbitBotModel.Parent = workspace
 
-    print("RabbitBot cloné dans workspace")
+--     print("RabbitBot cloné dans workspace")
 
-    -- Positionner au spawn joueur pour le voir
-    local spawnFolder = workspace:FindFirstChild("PlayerSpawn")
-    if spawnFolder then
-        local spawnPoint = spawnFolder:GetChildren()[1]
-        rabbitBotModel:PivotTo(spawnPoint.CFrame + Vector3.new(0,5,0))
-    end
+--     -- Positionner au spawn joueur pour le voir
+--     local spawnFolder = workspace:FindFirstChild("PlayerSpawn")
+--     if spawnFolder then
+--         local spawnPoint = spawnFolder:GetChildren()[1]
+--         rabbitBotModel:PivotTo(spawnPoint.CFrame + Vector3.new(0,5,0))
+--     end
 
-    local rabbitBot = RabbitBotClass.new(rabbitBotModel)
-    local rabbitBotBT = RabbitBT.new(rabbitBot)
+--     local rabbitBot = RabbitBotClass.new(rabbitBotModel)
+--     local rabbitBotBT = RabbitBT.new(rabbitBot)
 
-    rabbitBotBT:Start()
-    print("Bot position:", rabbitBotModel:GetPivot().Position)
+--     rabbitBotBT:Start()
+--     print("Bot position:", rabbitBotModel:GetPivot().Position)
 
-    print("RabbitBot IA démarré")
+--     print("RabbitBot IA démarré")
 
-	----------------------------------------------------
-	-- START EVENT CLIENT
-	----------------------------------------------------
+-- 	----------------------------------------------------
+-- 	-- START EVENT CLIENT
+-- 	----------------------------------------------------
 
-	StartEvent:FireAllClients(teleportData)
+-- 	StartEvent:FireAllClients(teleportData)
 
-	print("=== GAME STARTED ===")
+-- 	print("=== GAME STARTED ===")
 
-	return true
-end
+-- 	return true
+-- end
 
---------------------------------------------------------
--- END GAME
---------------------------------------------------------
+-- --------------------------------------------------------
+-- -- END GAME
+-- --------------------------------------------------------
 
-function GameManager:EndGame()
+-- function GameManager:EndGame()
 
-	if GameManager.State ~= "InGame" then
-		warn("EndGame appelé alors que pas InGame")
-		return false
-	end
+-- 	if GameManager.State ~= "InGame" then
+-- 		warn("EndGame appelé alors que pas InGame")
+-- 		return false
+-- 	end
 
-	GameManager.State = "Lobby"
+-- 	GameManager.State = "Lobby"
 
-	System:Stop()
-	HunterBT.Stop()
+-- 	System:Stop()
+-- 	HunterBT.Stop()
 
-	print("Game Ended")
+-- 	print("Game Ended")
 
-	ToMenu()
+-- 	ToMenu()
 
-	return true
-end
+-- 	return true
+-- end
 
-return GameManager
+-- return GameManager
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- local PlayerManager = require(game.ServerScriptService.Player.PlayerManager)
 
 -- local HungerSystem = require(game.ServerScriptService.Game.Systems.HungerSystem)
@@ -243,3 +266,80 @@ return GameManager
 -- end
 
 -- return GameManager
+
+
+local PlayerManager = require(game.ServerScriptService.Player.PlayerManager)
+local HungerSystem = require(game.ServerScriptService.Game.Systems.HungerSystem)
+local TimerSystem = require(game.ServerScriptService.Game.Systems.TimerSystem)
+local System = require(game.ServerScriptService.Game.Systems.System)
+local HunterClass = require(game.ServerScriptService.Hunter.HunterClass)
+local HunterBT = require(game.ServerScriptService.Hunter.HunterBT.HunterBT)
+local RabbitBotClass = require(game.ServerScriptService.RabbitBot.RabbitBotClass)
+local RabbitBT = require(game.ServerScriptService.RabbitBot.RabbitBT)
+
+local TeleportService = game:GetService("TeleportService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+local StartEvent = ReplicatedStorage.Remote:WaitForChild("StartGameEvent")
+
+local GameManager = {}
+GameManager.__index = GameManager
+GameManager.State = "Lobby"
+
+function GameManager:StartGame(teleportData)
+    if GameManager.State ~= "Lobby" then return false end
+    GameManager.State = "InGame"
+    GameManager.data = teleportData
+
+    print("=== START GAME ===")
+
+    -- 1. Init Systèmes
+    HungerSystem:Init(PlayerManager:GetAllRabbits())
+    TimerSystem:Init(PlayerManager:GetAllRabbits(), GameManager.EndGame)
+    task.spawn(function() System:Start() end)
+
+    -- 2. Spawn Joueurs
+    for _, rabbit in PlayerManager:GetAllRabbits() do
+        rabbit:Spawn()
+    end
+
+    -- 3. Spawn Hunter
+    local HunterModel = workspace:FindFirstChild("Chasseur_Test")
+    if HunterModel then
+        local Hunter = HunterClass.new(HunterModel)
+        HunterBT.Start(Hunter)
+    end
+
+    -- 4. Spawn RabbitBot (IA)
+    local rabbitTemplate = game.ServerStorage:WaitForChild("Asset"):WaitForChild("rabbitbot")
+    local rabbitBotModel = rabbitTemplate:Clone()
+    rabbitBotModel.Name = "RabbitBot"
+    rabbitBotModel.Parent = workspace
+
+    local spawnFolder = workspace:FindFirstChild("PlayerSpawn")
+    if spawnFolder then
+        local spawnPoint = spawnFolder:GetChildren()[1]
+        rabbitBotModel:PivotTo(spawnPoint.CFrame + Vector3.new(0,5,0))
+    end
+
+    -- Initialisation IA
+    local rabbitBot = RabbitBotClass.new(rabbitBotModel)
+    local rabbitBotBT = RabbitBT.new(rabbitBot)
+    rabbitBotBT:Start()
+
+    -- 5. Lancement Client
+    StartEvent:FireAllClients(teleportData)
+    print("=== GAME STARTED ===")
+    return true
+end
+
+function GameManager:EndGame()
+    if GameManager.State ~= "InGame" then return false end
+    GameManager.State = "Lobby"
+    System:Stop()
+    HunterBT.Stop()
+    return true
+end
+
+return GameManager
