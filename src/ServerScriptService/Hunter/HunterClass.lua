@@ -37,7 +37,7 @@ function Hunter.new(model: Model)
 	-- =============================
 	self.rangedAttackDamage = 25
 
-	self.rangedRange = 150
+	self.rangedRange = 200
 	self.rangedContext = nil
 	-- Timing tir
 	self.rangedCooldown = 2
@@ -53,7 +53,7 @@ function Hunter.new(model: Model)
 	self.magSize = 2 -- pour test
 	self.ammoInMag = self.magSize
 
-	self.maxAmmoReserve = 1
+	self.maxAmmoReserve = 4
 	self.ammoReserve = self.maxAmmoReserve
 
 	-- =============================

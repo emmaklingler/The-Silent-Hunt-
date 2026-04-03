@@ -337,6 +337,15 @@ function GameManager:EndGame()
     GameManager.State = "Lobby"
     System:Stop()
     HunterBT.Stop()
+
+    local PLACE_ID = 70426492448163
+	print("Teleporting players...")
+
+	TeleportService:TeleportPartyAsync(
+		PLACE_ID,
+		Players:GetPlayers()
+	)
+
     return true
 end
 

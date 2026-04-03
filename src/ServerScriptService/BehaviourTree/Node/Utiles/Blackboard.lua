@@ -51,7 +51,7 @@ function Blackboard:UpdatePerception(chasseur)
 	end
 
 	if not self.target or not self.target.Root then
-		if self:HasMemory() then
+		if self:HasMemory() and not self.hasVisual then
 			self.perception.ligneDeVue = math.clamp(1 - (os.clock() - self.lastStimulusTime)/self.memoryDuration*4, 0, 1)
 		else
 			self.perception.ligneDeVue = 0
@@ -82,6 +82,11 @@ function Blackboard:PushStimulus(stimulus)
 	if stimulus.type == "Vision" and stimulus.source then
 		self.target = stimulus.source
 		self.hasVisual = true
+	end
+	
+	if stimulus.type == "Noise" then
+		self.hasVisual = false
+		self.target = nil
 	end
 end
 
