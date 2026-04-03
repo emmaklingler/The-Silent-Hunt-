@@ -9,6 +9,7 @@ local LifeEvent = RemoteFolder:WaitForChild("LifeChangeEvent")
 local PlayerSpawn = game.Workspace:FindFirstChild("PlayerSpawn")
 
 local PlayerDeadEvent = ReplicatedStorage.Remote:WaitForChild("PlayerDeadServerEvent")
+local NoiseServerEvent = ReplicatedStorage.Remote:WaitForChild("NoiseServerEvent")
 
 local ServerStorage = game:GetService("ServerStorage")
 local NameTag = ServerStorage:WaitForChild("Asset"):WaitForChild("NameTag")
@@ -121,9 +122,15 @@ end
 --[[
     Fait du bruit
     @param value: le volume du bruit
+    @param intensity: l'intensité du bruit
 ]]
-function Rabbit:MakeNoise(value)
-    --self.NoiseLevel = math.clamp(self.NoiseLevel + value, 0, 100)
+function Rabbit:MakeNoise(value, intensity)
+    NoiseServerEvent:Fire({
+		position = self.Root.Position,
+		intensity = intensity,
+		time = os.clock(),
+		source = self.Player
+	})
 end
 
 local rabbitChar = game.ServerStorage.Asset:WaitForChild("RabbitCharacter")

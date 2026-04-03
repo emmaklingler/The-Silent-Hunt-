@@ -1,74 +1,70 @@
 local DetectNoises = {}
 DetectNoises.__index = DetectNoises
 
--- Enum des statuts du Behaviour Tree
 local Status = require(script.Parent.Parent.Utiles.Status)
+local NoiseEvent = game.ReplicatedStorage.Remote:WaitForChild("NoiseServerEvent")
 
--- Temps minimal entre deux détections de bruit
--- Évite de recalculer 60 fois par seconde
-local DETECTION_COOLDOWN = 0.2 -- secondes
---[[
-    Noeud DetectNoises: détecte les bruits dans l'environnement
-    @param chasseur: classe du chasseur
-    @param blackboard: table de données partagées
-    @return Status.SUCCESS si un bruit est détecté,
-            Status.FAILURE si aucun bruit pertinent n'est détecté
-]]
+-- Stockage global des bruits récents
+local noises = {}
 
-function DetectNoises.new()
-	local self = setmetatable({}, DetectNoises)
-	return self
+-- On écoute les bruits
+NoiseEvent.Event:Connect(function(data)
+	table.insert(noises, data)
+end)
+
+function DetectNoises.new(range)
+	return setmetatable({
+		hearingRadius = range
+	}, DetectNoises)
 end
 
---[[ 
-    Noeud DetectNoises
-    Rôle :
-    - Écoute l’environnement pour détecter un bruit
-    - Met à jour le blackboard avec une "cible sonore"
-    - Ne déclenche PAS directement une attaque
-]]
 function DetectNoises:Run(chasseur, blackboard)
+	if not chasseur.Root then
+		return Status.FAILURE
+	end
 
-	-- Initialisation de l’état interne du noeud
-	blackboard.detectNoises = blackboard.detectNoises or {
-		lastCheck = 0
-	}
-
-	local state = blackboard.detectNoises
 	local now = os.clock()
+	local origin = chasseur.Root.Position
 
-	-- Cooldown de détection
-	-- Évite de spammer DetectNoises() à chaque tick
-	if now - state.lastCheck < DETECTION_COOLDOWN then
+	local bestNoise = nil
+	local bestScore = math.huge
+
+	for i = #noises, 1, -1 do
+		local noise = noises[i]
+
+		-- Nettoyage vieux bruits
+		if now - noise.time > 4 then
+			table.remove(noises, i)
+			continue
+		end
+
+		local dist = (origin - noise.position).Magnitude
+
+		if dist <= self.hearingRadius then
+			if dist < bestScore then
+				bestScore = dist
+				bestNoise = noise
+			end
+		end
+	end
+
+	if not bestNoise then
 		return Status.FAILURE
 	end
 
-	state.lastCheck = now
-
-	-- Détection du bruit via le chasseur
-	-- Cette méthode devrait idéalement renvoyer :
-	-- {
-	--   source = <instance>,
-	--   position = Vector3,
-	--   intensity = number,
-	--   type = "step" | "jump" | "fall" | etc.
-	-- }
-	local detectedNoise = chasseur:DetectNoises()
-
-	-- Aucun bruit détecté
-	if not detectedNoise then
+	if blackboard.hasVisual then
 		return Status.FAILURE
 	end
+	if blackboard:HasMemory() and blackboard.lastStimulusType == "Noise" then
+		return Status.FAILURE
+	end
+	-- Push stimulus SANS target
+	blackboard:PushStimulus({
+		type = "Noise",
+		position = bestNoise.position,
+		time = bestNoise.time
+	})
 
-	-- Mise à jour du blackboard
-	-- IMPORTANT : on ne remplace PAS forcément une cible visible
-	-- Une cible sonore est moins fiable qu’une cible visuelle
-	blackboard.lastKnownPosition = detectedNoise.position
-	blackboard.noiseSource = detectedNoise.source
-	blackboard.hasHeardNoise = true
-
-	-- On ne met PAS directement blackboard.target ici
-	-- Le choix final appartient au Behaviour Tree (Selector / WeightedSelector)
 	return Status.SUCCESS
 end
 
