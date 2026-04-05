@@ -5,95 +5,83 @@ local RunService = game:GetService("RunService")
 local Node = game.ServerScriptService:WaitForChild("BehaviourTree"):WaitForChild("Node")
 
 local Selector = require(Node.Utiles.Selector)
+local Sequence = require(Node.Utiles.Sequence)
 local Blackboard = require(Node.Utiles.Blackboard)
-local Status = require(Node.Utiles.Status)
 
-local Wander = require(Node.ActionNode.Wander)
-local EatCarrot = require(Node.ActionNode.EatCarrot)
+local Flee       = require(Node.ActionNode.Flee)
+local GoToCarrot = require(Node.ActionNode.GoToCarrot)
+local Wander     = require(Node.ActionNode.Wander)
+
+local IsHungry    = require(Node.ConditionNode.IsHungry)
+local HunterClose = require(Node.ConditionNode.HunterClose)
+
 local DetectCarrot = require(Node.Perception.DetectCarrot)
 
-function RabbitBT.new(rabbit)
-    local self = setmetatable({}, RabbitBT)
-    self.rabbit = rabbit
-    self.blackboard = Blackboard.new()
-    self.blackboard:InitRabbitData() 
-    
-    self.perceptionCarrot = DetectCarrot.new(60)
-    self.connexion = nil
+-----------------------------------------------------
+-- BEHAVIOUR TREE
+-----------------------------------------------------
 
-    local eatActionNode = EatCarrot.new()
-    local wanderActionNode = Wander.new()
+local tree = Selector.new({
 
-    self.tree = Selector.new({
-        
-        -- PRIORITÉ 1 : LA FUITE
-        {
-            Run = function(_, r, bb)
-                if bb.hunterRoot then
-                    r.wanderTarget = nil -- Reset wander si on a peur
-                    return r:TryFlee(bb.hunterRoot.Position)
-                end
-                return Status.FAILURE
-            end
-        },
+    -- ======== PRIORITÉ 1 : FUIR ========
+    -- Si le chasseur est visible → fuir immédiatement
+    Sequence.new({
+        HunterClose.new(),   -- vérifie si le chasseur est dans le rayon + ligne de vue
+        Flee.new(),          -- fuite dans la direction opposée
+    }),
 
-        -- PRIORITÉ 2 : MANGER
-        {
-            Run = function(_, r, bb)
-                if r.Satiety < 60 and bb.closestCarrot then
-                    r.wanderTarget = nil -- Reset wander si on va manger
-                    return eatActionNode:Run(r, bb)
-                end
-                return Status.FAILURE
-            end
-        },
+    -- ======== PRIORITÉ 2 : MANGER ========
+    -- Si le lapin a faim ET qu'une carotte est détectée → aller manger
+    Sequence.new({
+        IsHungry.new(),      -- Satiety < 70
+        DetectCarrot.new(200), -- cherche dans workspace.Carrot, stocke dans blackboard
+        GoToCarrot.new(),    -- se déplace vers bb.closestCarrot et mange
+    }),
 
-        -- PRIORITÉ 3 : ERRER
-        {
-            Run = function(_, r, bb)
-                return wanderActionNode:Run(r, bb)
-            end
-        }
-    })
+    -- ======== PRIORITÉ 3 : ERRER ========
+    -- Fallback : se balader aléatoirement
+    Wander.new(),
+})
 
-    return self
+-----------------------------------------------------
+-- PERCEPTION (mise à jour du blackboard chaque tick)
+-----------------------------------------------------
+
+local function UpdatePerception(rabbit, blackboard)
+    blackboard:UpdatePerceptionRabbit(rabbit)
 end
 
-function RabbitBT:Start()
-    if self.connexion then self.connexion:Disconnect() end
-    print("🚀 [BT] Cerveau du lapin démarré.")
+-----------------------------------------------------
+-- START / STOP
+-----------------------------------------------------
 
-    self.connexion = RunService.Heartbeat:Connect(function()
-        local rabbit = self.rabbit
-        if not rabbit or not rabbit.Root or not rabbit.Model.Parent then 
-            self:Stop()
-            return 
+local connexion = nil
+
+function RabbitBT.Start(rabbit)
+    if connexion then
+        connexion:Disconnect()
+    end
+
+    local blackboard = Blackboard.new()
+
+    connexion = RunService.Heartbeat:Connect(function()
+        if not rabbit or not rabbit.Root or not rabbit.Model.Parent then
+            RabbitBT.Stop()
+            return
         end
 
-        -- Cycle de faim
-        rabbit.Satiety = math.max(0, rabbit.Satiety - 0.015)
+        -- Décroissance de la satiété (1 point toutes les ~2s à 60fps)
+        rabbit.Satiety = math.max(0, rabbit.Satiety - (1 / 120))
 
-        -- Logs de diagnostic toutes les 5 secondes
-        if math.floor(os.clock() % 5) == 0 and not self._lastLog then
-            print(string.format("📊 [DEBUG] Faim: %.1f | Cible: %s", rabbit.Satiety, self.blackboard.closestCarrot and "Carotte" or "Rien"))
-            self._lastLog = true
-        elseif math.floor(os.clock() % 5) ~= 0 then
-            self._lastLog = false
-        end
-
-        -- Perception
-        self.perceptionCarrot:Run(rabbit, self.blackboard)
-        self.blackboard:UpdatePerceptionRabbit(rabbit)
-
-        -- Exécution
-        self.tree:Run(rabbit, self.blackboard)
+        UpdatePerception(rabbit, blackboard)
+        tree:Run(rabbit, blackboard)
     end)
 end
 
-function RabbitBT:Stop()
-    if self.connexion then
-        self.connexion:Disconnect()
-        self.connexion = nil
+function RabbitBT.Stop()
+    if connexion then
+        connexion:Disconnect()
+        connexion = nil
     end
 end
 

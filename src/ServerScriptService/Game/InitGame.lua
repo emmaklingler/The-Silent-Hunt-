@@ -324,8 +324,7 @@ function GameManager:StartGame(teleportData)
 
     -- Initialisation IA
     local rabbitBot = RabbitBotClass.new(rabbitBotModel)
-    local rabbitBotBT = RabbitBT.new(rabbitBot)
-    rabbitBotBT:Start()
+    RabbitBT.Start(rabbitBot)
 
     -- 5. Lancement Client
     StartEvent:FireAllClients(teleportData)

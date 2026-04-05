@@ -1,23 +1,31 @@
 local DetectCarrot = {}
 DetectCarrot.__index = DetectCarrot
 
-local folder = game.Workspace:WaitForChild("Carrot")
+local Status = require(script.Parent.Parent.Utiles.Status)
 
-function DetectCarrot.new(radius)
+--[[
+    Noeud DetectCarrot : cherche la carotte la plus proche dans workspace.Carrot
+    et la stocke dans le blackboard si elle est à portée.
+
+    @param maxDistance: number - rayon de détection (défaut: 200)
+]]
+function DetectCarrot.new(maxDistance)
     local self = setmetatable({}, DetectCarrot)
-    self.radius = radius or 50
+    self.maxDistance = maxDistance or 200
     return self
 end
 
-function DetectCarrot:Run(rabbit, blackboard)   
+function DetectCarrot:Run(rabbit, blackboard)
+    local carrot = rabbit:GetClosestCarrot(self.maxDistance)
 
-    for _, carrot in folder:GetChildren() do
-        local dist = (rabbit.Root.Position - carrot.Position).Magnitude
-
-        if dist < self.radius then
-            blackboard:SetCarrotPosition(carrot.Position)
-        end
+    if carrot then
+        blackboard:SetClosestCarrot(carrot)
+        return Status.SUCCESS
     end
+
+    -- Aucune carotte à portée : on nettoie le blackboard
+    blackboard:SetClosestCarrot(nil)
+    return Status.FAILURE
 end
 
 return DetectCarrot
