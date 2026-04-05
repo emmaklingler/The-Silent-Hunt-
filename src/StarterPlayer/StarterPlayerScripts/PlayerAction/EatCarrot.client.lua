@@ -3,12 +3,14 @@ local Player = game.Players.LocalPlayer
 local EatCarrotEvent = ReplicatedStorage.Remote:WaitForChild("EatCarrotEvent")
 local CreateCarrotEvent = ReplicatedStorage.Remote:WaitForChild("CreateCarrotEvent")
 
+local CarrotFolder = workspace:WaitForChild("Carrot")
+
 --[[
     Gestion de l'événement lorsque le joueur interagit avec la carotte.
 ]]
 CreateCarrotEvent.OnClientEvent:Connect(function(carrotName)
     if not carrotName then return end
-    local carrot = workspace:WaitForChild(carrotName) 
+    local carrot = CarrotFolder:WaitForChild(carrotName) 
     -- attendre que tout soit bien répliqué
     local prompt = carrot:WaitForChild("ProximityPrompt")
 

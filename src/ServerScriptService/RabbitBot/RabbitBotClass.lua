@@ -5,7 +5,8 @@ local PathfindingService = game:GetService("PathfindingService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
 local SoundManager = require(game.ServerScriptService.Sound.SoundManager)
--- On récupère l'event pour les animations
+
+-- Event pour les animations
 local ChangeStateRabbitEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateRabbitEvent")
 
 function RabbitBot.new(model)
@@ -15,15 +16,11 @@ function RabbitBot.new(model)
     self.Humanoid = model:WaitForChild("Humanoid")
     self.Root = model:WaitForChild("HumanoidRootPart")
 
-    -- =============================
-    -- FIX PHYSIQUE ET RESEAU
-    -- =============================
-    -- On s'assure que le serveur gère la physique pour éviter les saccades
+    -- FIX PHYSIQUE : On s'assure que le serveur gère le bot
     local success, err = pcall(function()
         self.Root:SetNetworkOwner(nil)
     end)
     
-    -- Empêche le bot de "coller" au sol (ajuste la valeur selon la taille du modèle)
     self.Humanoid.AutoRotate = true
 
     -- Stats vitales
@@ -42,24 +39,26 @@ function RabbitBot.new(model)
     -- États internes
     self.state = "Idle"
     self.fleeState = nil
+    self.wanderTarget = nil 
     self.jumpCooldown = 0
-    self.jumpForce = 60 -- Un peu réduit pour plus de réalisme
+    self.jumpForce = 60 
     self.upForce = 35
 
     return self
 end
 
+-- =====================================================
+-- COMPORTEMENT DE SURVIE (FUITE)
+-- =====================================================
 function RabbitBot:TryFlee(hunterPosition)
-    if not self.Root or not hunterPosition then
-        return Status.FAILURE
-    end
+    if not self.Root or not hunterPosition then return Status.FAILURE end
+    
+    -- Si on doit fuir, on oublie la balade en cours
+    self.wanderTarget = nil
 
     if self.fleeState then
-        if math.random() < 0.08 then
-            self:Jump()
-        end
-
         if os.clock() >= self.fleeState.endTime then
+            warn("🏃‍♂️ [FUITE] Terminée.")
             self.fleeState = nil
             self.Humanoid.WalkSpeed = self.normalSpeed
             self:ChangeState("Idle")
@@ -68,144 +67,131 @@ function RabbitBot:TryFlee(hunterPosition)
         return Status.RUNNING
     end
 
-    local direction = (self.Root.Position - hunterPosition)
-    if direction.Magnitude == 0 then return Status.FAILURE end
-
-    direction = direction.Unit
+    print("😱 [FUITE] Chasseur trop proche ! Fuite lancée.")
+    local direction = (self.Root.Position - hunterPosition).Unit
     local fleeTarget = self.Root.Position + direction * self.fleeDistance
 
-    self.fleeState = {
-        endTime = os.clock() + self.fleeDuration
-    }
-
+    self.fleeState = { endTime = os.clock() + self.fleeDuration }
     self.Humanoid.WalkSpeed = self.fleeSpeed
     self.Humanoid:MoveTo(fleeTarget)
-    self:ChangeState("Running") -- "Running" au lieu de "Flee" pour correspondre aux anims
-
+    self:ChangeState("Running")
     self:Jump()
+
     return Status.RUNNING
 end
 
-function RabbitBot:ChangeState(state)
-    if self.state == state then return end
-    self.state = state
+-- =====================================================
+-- GESTION DES BESOINS (MANGER)
+-- =====================================================
+function RabbitBot:ActionEat(carrotPart)
+    if not carrotPart or not carrotPart.Parent then return false end
     
-    -- On prévient tous les clients que CE bot change d'état
-    ChangeStateRabbitEvent:FireAllClients(self.Model, state)
+    self.wanderTarget = nil -- Stop tout mouvement
+    warn("😋 [ACTION] Le lapin mange : " .. carrotPart.Name)
+    
+    self:ChangeState("Idle")
+    self.Humanoid:MoveTo(self.Root.Position) 
+
+    SoundManager.playSound(nil, carrotPart.Position, SoundManager.SoundId.EatCarrot, 1)
+    carrotPart:Destroy()
+    self.Satiety = 100
+    return true
 end
 
-function RabbitBot:IsGrounded()
-    return self.Humanoid.FloorMaterial ~= Enum.Material.Air
-end
+-- =====================================================
+-- NAVIGATION ET MOUVEMENT ALEATOIRE (WANDER)
+-- =====================================================
+function RabbitBot:Wander()
+    -- 1. Si on a déjà une cible, on gère le déplacement vers elle
+    if self.wanderTarget then
+        local currentPos = self.Root.Position
+        local targetPos = self.wanderTarget
+        
+        -- Calcul de distance à plat (XZ) pour éviter les bugs de saut/hauteur
+        local distance = (Vector3.new(currentPos.X, 0, currentPos.Z) - Vector3.new(targetPos.X, 0, targetPos.Z)).Magnitude
 
--- À ajouter dans ton fichier RabbitBot.lua actuel
-
--- Scanne le dossier CarrotSpawn et trouve la carotte la plus proche
-function RabbitBot:GetNearestCarrot()
-    local spawnsFolder = workspace:FindFirstChild("CarrotSpawn")
-    if not spawnsFolder then return nil end
-
-    local closestCarrot = nil
-    local shortestDistance = math.huge
-
-    -- On boucle sur les enfants du dossier uniquement
-    for _, child in spawnsFolder:GetChildren() do
-        local distance = (self.Root.Position - child.Position).Magnitude
-        if distance < shortestDistance then
-            shortestDistance = distance
-            closestCarrot = child -- C'est bien la carotte individuelle ici
+        if distance > 4 then
+            -- On ne relance MoveTo QUE si le bot s'est arrêté de marcher physiquement
+            if self.Humanoid.MoveDirection.Magnitude < 0.1 then
+                self.Humanoid:MoveTo(self.wanderTarget)
+            end
+            self:ChangeState("Running")
+            return Status.RUNNING
+        else
+            -- On est arrivé à la destination Wander
+            print("📍 [WANDER] Destination atteinte.")
+            self.wanderTarget = nil
+            self:ChangeState("Idle")
+            return Status.SUCCESS
         end
     end
 
-    return closestCarrot
-end
-function RabbitBot:Follow(targetPosition)
-    if not targetPosition then return Status.FAILURE end
-
-    -- 1. ORDRE PHYSIQUE
-    self.Humanoid:MoveTo(targetPosition)
+    -- 2. Création d'une nouvelle cible si on n'en a pas
+    local randomOffset = Vector3.new(math.random(-40, 40), 0, math.random(-40, 40))
+    local newDest = self.Root.Position + randomOffset
     
-    -- 2. ORDRE D'ANIMATION (Le remède à la glissade)
-    -- On vérifie si le lapin est censé bouger
-    if (targetPosition - self.Root.Position).Magnitude > 2 then
-        self:ChangeState("Running")
+    -- Sécurité : On vérifie que la cible n'est pas sur nous-même
+    if (newDest - self.Root.Position).Magnitude < 10 then
+        return Status.FAILURE
     end
 
-    -- 3. VÉRIFICATION D'ARRIVÉE
-    -- Si le lapin s'arrête de lui-même (cible atteinte)
-    if self.Humanoid.MoveDirection.Magnitude == 0 then
-        self:ChangeState("Idle")
-        return Status.SUCCESS
-    end
-
+    self.wanderTarget = newDest
+    print("🎲 [WANDER] Nouvelle cible choisie.")
+    
+    self.Humanoid:MoveTo(self.wanderTarget)
+    self:ChangeState("Running")
     return Status.RUNNING
 end
+
+-- =====================================================
+-- PERCEPTION (REMISE EN PLACE POUR BLACKBOARD)
+-- =====================================================
+function RabbitBot:CanSeeHunter(hunterRoot)
+    if not hunterRoot or not self.Root then return false end
+    
+    local direction = (hunterRoot.Position - self.Root.Position)
+    local distance = direction.Magnitude
+    
+    if distance > self.panicRadius then return false end
+
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = { self.Model }
+
+    local result = workspace:Raycast(self.Root.Position, direction.Unit * distance, params)
+    
+    if result then
+        local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
+        return hitModel == hunterRoot.Parent
+    end
+    return true
+end
+
+-- =====================================================
+-- ETATS ET UTILITAIRES
+-- =====================================================
+function RabbitBot:ChangeState(state)
+    -- VERROU CRITIQUE : Empêche le bégaiement de l'animation
+    if self.state == state then return end
+    
+    self.state = state
+    ChangeStateRabbitEvent:FireAllClients(self.Model, state)
+end
+
 function RabbitBot:Jump()
     if not self:IsGrounded() or os.clock() < self.jumpCooldown then return end
-
     self:ChangeState("Jumping")
     
     local hrp = self.Root
     local dir = hrp.CFrame.LookVector
     local mass = hrp.AssemblyMass
 
-    hrp:ApplyImpulse(Vector3.new(
-        dir.X * self.jumpForce * mass,
-        self.upForce * mass,
-        dir.Z * self.jumpForce * mass
-    ))
-
+    hrp:ApplyImpulse(Vector3.new(dir.X * self.jumpForce * mass, self.upForce * mass, dir.Z * self.jumpForce * mass))
     self.jumpCooldown = os.clock() + 1.5
-    
-    -- Retour à l'état précédent après le saut
-    task.delay(0.8, function()
-        if self.Humanoid.MoveDirection.Magnitude > 0 then
-            self:ChangeState("Running")
-        else
-            self:ChangeState("Idle")
-        end
-    end)
 end
 
-
-function RabbitBot:ActionEat(carrotPart)
-    if not carrotPart or not carrotPart.Parent then return false end
-    
-    self:ChangeState("Idle")
-
-    print(carrotPart)
-
-    carrotPart:Destroy()
-
-    self.Satiety = 100
-
-
-    print("🐰 [MIAM] Le lapin a fini de manger.")
-    return true
-end
-
-
-
-function RabbitBot:CanSeeHunter(hunterRoot)
-    if not hunterRoot or not self.Root then return false end
-
-    local direction = (hunterRoot.Position - self.Root.Position)
-    local distance = direction.Magnitude
-
-    if distance > self.panicRadius then return false end
-
-    -- Raycast pour vérifier les murs
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = { self.Model }
-
-    local result = workspace:Raycast(self.Root.Position, direction.Unit * distance, params)
-
-    if result then
-        local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
-        return hitModel == hunterRoot.Parent
-    end
-    return true
+function RabbitBot:IsGrounded()
+    return self.Humanoid.FloorMaterial ~= Enum.Material.Air
 end
 
 return RabbitBot
