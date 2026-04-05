@@ -22,6 +22,7 @@ local MakeTrap = require(Node.ActionNode.MakeTrap)
 local InRange = require(Node.ConditionNode.InRange)
 
 local DetectionVision = require(Node.Perception.DetectionVision)
+local DetectionNoise = require(Node.Perception.DetectNoises)
 local Blackboard = require(Node.Utiles.Blackboard)
 
 -----------------------------------------------------
@@ -59,7 +60,7 @@ local BT2 = WeightedSelector.new({
 		block = true,
 		priority = 4,
 		node = MemorySequence.new({
-			InRange.new(0, 120),
+			InRange.new(0, 150),
 			RangedAttack.new(),
 		}),
 	},
@@ -156,10 +157,12 @@ end
 -- PERCEPTION
 -----------------------------------------------------
 
-local PerceptionVision = DetectionVision.new(200)
+local PerceptionVision = DetectionVision.new(250)
+local PerceptionNoise = DetectionNoise.new(350)
 
 local function PerceptionUpdate(hunter)
 	PerceptionVision:Run(hunter, blackboard)
+	PerceptionNoise:Run(hunter, blackboard)
 end
 
 -----------------------------------------------------

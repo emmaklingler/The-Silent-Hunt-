@@ -14,18 +14,19 @@ function HunterUtility.CalculePoids(hunter, blackboard)
 		PoidsCorpsACorps = 0
 	end
 
+
 	local CourbeBalleChargeur = math.min(1,math.sqrt(hunterStats.balleChargeur) * 1.2)
 	local CourbeDistanceLapin = math.max(0, math.min(1,1-((math.abs(stats.distanceLapin - 0.4)+0.25)^3)))
 	local CourbeFatigue = math.max(0,(hunterStats.fatigue^3) * 0.8)
 
-	local PoidsTir = CourbeBalleChargeur*math.max(0,CourbeDistanceLapin-CourbeFatigue)
+	local PoidsTir = CourbeBalleChargeur*math.max(0,CourbeDistanceLapin-CourbeFatigue) - (not blackboard.hasVisual and 1 or 0)
 	local PoidsPoursuite = (1-hunterStats.fatigue) * stats.ligneDeVue * hunterStats.patience * hunterStats.balleReserve^2
 
 	--Logistique
 
 	local PoidsRecharge = (1-hunterStats.balleChargeur) * hunterStats.balleReserve
 	local PoidsGetMunitions = (1-hunterStats.balleReserve) * (1-stats.ligneDeVue) * (1-hunterStats.fatigue/2)
-	local PoidsPoursuitePosition = hunterStats.patience * (1-stats.ligneDeVue) * (1-hunterStats.fatigue)/2 * stats.position
+	local PoidsPoursuitePosition = hunterStats.patience * (1-stats.ligneDeVue) * (1-hunterStats.fatigue)/2 * stats.position + stats.position*(not blackboard.hasVisual and 1 or -1)
 
 	local CourbeStockPiege = ((hunterStats.trapsStock-0.2)^3)/1.5 + 0.1
 	local CourbeFatiguePiege = math.sin((hunterStats.fatigue-0.1)+2)

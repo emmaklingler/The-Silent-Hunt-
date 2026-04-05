@@ -53,19 +53,19 @@ function Blackboard:UpdatePerception(chasseur)
         self.perception.distanceLapin = 1
     end
 
-    if not self.target or not self.target.Root then
-        if self:HasMemory() then
-            self.perception.ligneDeVue = math.clamp(1 - (os.clock() - self.lastStimulusTime)/self.memoryDuration*4, 0, 1)
-        else
-            self.perception.ligneDeVue = 0
-        end
-        self.perception.vieLapin = 0
-        ChangePerception:FireAllClients(self.perception)
-        return
-    end
-    -- Distance
-    local dist = (chasseur.Root.Position - self.target.Root.Position).Magnitude
-    self.perception.distanceLapin = math.clamp(dist / 200, 0, 1)
+	if not self.target or not self.target.Root then
+		if self:HasMemory() and not self.hasVisual then
+			self.perception.ligneDeVue = math.clamp(1 - (os.clock() - self.lastStimulusTime)/self.memoryDuration*4, 0, 1)
+		else
+			self.perception.ligneDeVue = 0
+		end
+		self.perception.vieLapin = 0
+		ChangePerception:FireAllClients(self.perception)
+		return
+	end
+	-- Distance
+	local dist = (chasseur.Root.Position - self.target.Root.Position).Magnitude
+	self.perception.distanceLapin = math.clamp(dist / 200, 0, 1)
 
     -- Vie
     self.perception.vieLapin = math.clamp(self.target.Health / self.target.MaxHealth, 0, 1)
@@ -82,10 +82,15 @@ function Blackboard:PushStimulus(stimulus)
     self.lastStimulusTime = stimulus.time or os.clock()
     self.lastStimulusType = stimulus.type
 
-    if stimulus.type == "Vision" and stimulus.source then
-        self.target = stimulus.source
-        self.hasVisual = true
-    end
+	if stimulus.type == "Vision" and stimulus.source then
+		self.target = stimulus.source
+		self.hasVisual = true
+	end
+	
+	if stimulus.type == "Noise" then
+		self.hasVisual = false
+		self.target = nil
+	end
 end
 
 function Blackboard:SetSeenTarget(target)

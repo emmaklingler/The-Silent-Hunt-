@@ -280,6 +280,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 
 local StartEvent = ReplicatedStorage.Remote:WaitForChild("StartGameEvent")
+local EndGameEvent = ReplicatedStorage.Remote:WaitForChild("EndGameEvent")
 
 local GameManager = {}
 GameManager.__index = GameManager
@@ -337,6 +338,26 @@ function GameManager:EndGame()
     GameManager.State = "Lobby"
     System:Stop()
     HunterBT.Stop()
+
+    for _, rabbit in PlayerManager:GetAllRabbits() do
+        if rabbit:IsAlive() then
+            EndGameEvent:FireClient(rabbit.Player, "Win")
+        else
+            EndGameEvent:FireClient(rabbit.Player, "Lose")
+        end
+    end
+    
+
+    local PLACE_ID = 70426492448163
+	print("Teleporting players...")
+
+    task.delay(5, function()
+        TeleportService:TeleportPartyAsync(
+            PLACE_ID,
+            Players:GetPlayers()
+        )
+    end)
+
     return true
 end
 
