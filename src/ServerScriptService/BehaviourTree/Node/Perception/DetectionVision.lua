@@ -29,7 +29,7 @@ function DetectionVision:Run(chasseur, blackboard)
 
 	local visibleTargets = {}
 
-	for _, rabbit in PlayerManager:GetAllRabbits() do
+	for _, rabbit in PlayerManager:GetAllTargets() do
 		if rabbit.Root and rabbit:IsAlive() and not rabbit:DansCachette() then
 			
 			local toTarget = rabbit.Root.Position - origin

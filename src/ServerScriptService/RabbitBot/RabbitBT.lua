@@ -70,8 +70,15 @@ function RabbitBT.Start(rabbit)
             return
         end
 
-        -- Décroissance de la satiété (1 point toutes les ~2s à 60fps)
+        -- Décroissance de la satiété
         rabbit.Satiety = math.max(0, rabbit.Satiety - (1 / 120))
+
+        -- ← Log faim toutes les 10 unités
+        local satInt = math.floor(rabbit.Satiety)
+        if satInt % 10 == 0 and satInt ~= (rabbit._lastLoggedSatiety or -1) then
+            print(string.format("[RabbitBot] 🍽️ Faim: %.0f/100", rabbit.Satiety))
+            rabbit._lastLoggedSatiety = satInt
+        end
 
         UpdatePerception(rabbit, blackboard)
         tree:Run(rabbit, blackboard)

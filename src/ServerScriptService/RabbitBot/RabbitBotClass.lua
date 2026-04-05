@@ -25,7 +25,7 @@ function RabbitBot.new(model)
     self.Stress = 0
 
     -- Paramètres IA
-    self.panicRadius = 60
+    self.panicRadius = 150
     self.fleeDistance = 80
     self.fleeSpeed = 28
     self.normalSpeed = 16
@@ -85,7 +85,7 @@ function RabbitBot:ComputePath(targetPosition)
     local path = PathfindingService:CreatePath({
         AgentRadius = 4,
         AgentHeight = 6,
-        AgentCanJump = true,
+        AgentCanJump = false,
         WaypointSpacing = 6,
     })
 
@@ -231,7 +231,6 @@ end
 function RabbitBot:TryFlee(hunterPosition)
     if not self.Root or not hunterPosition then return Status.FAILURE end
 
-    -- Annule tout pathfinding en cours
     self:StopMove(false)
 
     if self.fleeState then
@@ -244,16 +243,40 @@ function RabbitBot:TryFlee(hunterPosition)
         return Status.RUNNING
     end
 
-    local direction = (self.Root.Position - hunterPosition).Unit
-    local fleeTarget = self.Root.Position + direction * self.fleeDistance
+    -- Direction opposée au chasseur
+    local awayDir = (self.Root.Position - hunterPosition).Unit
 
+    -- Cherche le meilleur spawn point : loin du chasseur + dans la bonne direction
+    local bestPoint = nil
+    local bestScore = -math.huge
+
+    for _, spawnPos in ipairs(self._carrotSpawnPoints) do
+        local toSpawn = (spawnPos - self.Root.Position)
+        local dist = toSpawn.Magnitude
+
+        if dist > 5 then  -- ignore les spawns trop proches
+            local dot = awayDir:Dot(toSpawn.Unit)  -- +1 = bonne direction, -1 = vers le chasseur
+            local distFromHunter = (spawnPos - hunterPosition).Magnitude
+
+            -- Score : favorise la bonne direction ET la distance au chasseur
+            local score = dot * 2 + (distFromHunter / 100)
+
+            if score > bestScore then
+                bestScore = score
+                bestPoint = spawnPos
+            end
+        end
+    end
+
+    -- Fallback si aucun spawn trouvé
+    local fleeTarget = bestPoint or (self.Root.Position + awayDir * self.fleeDistance)
+    print(string.format("[RabbitBot] 😱 FUITE vers spawn point ! Chasseur à %.0f studs", (self.Root.Position - hunterPosition).Magnitude))
     self.fleeState = { endTime = os.clock() + self.fleeDuration }
     self.Humanoid.WalkSpeed = self.fleeSpeed
-    self.Humanoid:MoveTo(fleeTarget)
     self:ChangeState("Running")
-   
 
-    return Status.RUNNING
+    -- Utilise le pathfinding pour atteindre le point de fuite
+    return self:Follow(fleeTarget, self.fleeDuration)
 end
 
 -- =====================================================
@@ -271,8 +294,13 @@ function RabbitBot:GoToAndEat(carrot)
         return Status.FAILURE
     end
 
-    local dist = (self.Root.Position - carrot.Position).Magnitude
-    if dist <= 4 then
+    -- Distance horizontale seulement (ignore la hauteur)
+    local flatDist = (
+        Vector3.new(self.Root.Position.X, 0, self.Root.Position.Z) -
+        Vector3.new(carrot.Position.X, 0, carrot.Position.Z)
+    ).Magnitude
+
+    if flatDist <= 4 then
         self:ActionEat(carrot)
         return Status.SUCCESS
     end
@@ -280,7 +308,16 @@ function RabbitBot:GoToAndEat(carrot)
     return self:Follow(carrot.Position, 10)
 end
 
+function RabbitBot:IsAlive()
+    return self.Health > 0
+end
+
+
+function RabbitBot:DansCachette()
+    return false  
+end
 function RabbitBot:ActionEat(carrotPart)
+    print(string.format("[RabbitBot] 🥕 Mange une carotte ! Satiété: %.0f → 100", self.Satiety))
     if not carrotPart or not carrotPart.Parent then return false end
 
     self:StopMove()
@@ -364,6 +401,16 @@ function RabbitBot:Jump()
         dir.Z * self.jumpForce * mass
     ))
     self.jumpCooldown = os.clock() + 1.5
+end
+function RabbitBot:RemoveHealth(amount)
+    self.Health = math.max(0, self.Health - amount)
+    print(string.format("[RabbitBot] 🩸 Touché ! -%.0f HP → Vie restante: %.0f/100", amount, self.Health))
+    
+    if self.Health <= 0 then
+        self.Health = 0
+        print("[RabbitBot] 💀 Bot mort !")
+        self.Model:Destroy()
+    end
 end
 
 function RabbitBot:IsGrounded()

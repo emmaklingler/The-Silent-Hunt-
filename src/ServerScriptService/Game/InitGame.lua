@@ -286,6 +286,7 @@ local GameManager = {}
 GameManager.__index = GameManager
 GameManager.State = "Lobby"
 
+
 function GameManager:StartGame(teleportData)
     if GameManager.State ~= "Lobby" then return false end
     GameManager.State = "InGame"
@@ -324,6 +325,7 @@ function GameManager:StartGame(teleportData)
 
     -- Initialisation IA
     local rabbitBot = RabbitBotClass.new(rabbitBotModel)
+    PlayerManager:AddBot(rabbitBot) -- Ajoute le bot à la liste des cibles pour la détection du chasseur
     RabbitBT.Start(rabbitBot)
 
     -- 5. Lancement Client
