@@ -273,7 +273,6 @@ local System = require(game.ServerScriptService.Game.Systems.System)
 local HunterClass = require(game.ServerScriptService.Hunter.HunterClass)
 local HunterBT = require(game.ServerScriptService.Hunter.HunterBT.HunterBT)
 local RabbitBotClass = require(game.ServerScriptService.RabbitBot.RabbitBotClass)
-local RabbitBT = require(game.ServerScriptService.RabbitBot.RabbitBT)
 
 local TeleportService = game:GetService("TeleportService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -288,6 +287,7 @@ GameManager.State = "Lobby"
 
 
 function GameManager:StartGame(teleportData)
+    print(teleportData.nbBots)
     if GameManager.State ~= "Lobby" then return false end
     GameManager.State = "InGame"
     GameManager.data = teleportData
@@ -312,21 +312,10 @@ function GameManager:StartGame(teleportData)
     end
 
     -- 4. Spawn RabbitBot (IA)
-    local rabbitTemplate = game.ServerStorage:WaitForChild("Asset"):WaitForChild("rabbitbot")
-    local rabbitBotModel = rabbitTemplate:Clone()
-    rabbitBotModel.Name = "RabbitBot"
-    rabbitBotModel.Parent = workspace
-
-    local spawnFolder = workspace:FindFirstChild("PlayerSpawn")
-    if spawnFolder then
-        local spawnPoint = spawnFolder:GetChildren()[1]
-        rabbitBotModel:PivotTo(spawnPoint.CFrame + Vector3.new(0,5,0))
+    for i = 1, teleportData.nbBots do
+        local rabbitBot = RabbitBotClass.spawn()
+        PlayerManager:AddBot(rabbitBot) -- Ajoute le bot à la liste des cibles pour la détection du chasseur
     end
-
-    -- Initialisation IA
-    local rabbitBot = RabbitBotClass.new(rabbitBotModel)
-    PlayerManager:AddBot(rabbitBot) -- Ajoute le bot à la liste des cibles pour la détection du chasseur
-    RabbitBT.Start(rabbitBot)
 
     -- 5. Lancement Client
     StartEvent:FireAllClients(teleportData)

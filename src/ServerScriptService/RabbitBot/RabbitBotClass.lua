@@ -5,10 +5,38 @@ local PathfindingService = game:GetService("PathfindingService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
 local SoundManager = require(game.ServerScriptService.Sound.SoundManager)
+local RabbitBT = require(game.ServerScriptService.RabbitBot.RabbitBT)
 
 local ChangeStateRabbitEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateRabbitEvent")
 
-function RabbitBot.new(model)
+function RabbitBot.spawn()
+    -- =========================
+    -- RÉCUP TEMPLATE
+    -- =========================
+    local template = game.ServerStorage:WaitForChild("Asset"):WaitForChild("rabbitbot")
+
+    -- =========================
+    -- CLONE
+    -- =========================
+    local model = template:Clone()
+    model.Name = "RabbitBot"
+    model.Parent = workspace
+
+    -- =========================
+    -- POSITION SPAWN
+    -- =========================
+    local spawnFolder = workspace:FindFirstChild("PlayerSpawn")
+    if spawnFolder then
+        local spawnPoints = spawnFolder:GetChildren()
+        if #spawnPoints > 0 then
+            local spawnPoint = spawnPoints[math.random(1, #spawnPoints)]
+            model:PivotTo(spawnPoint.CFrame + Vector3.new(0,5,0))
+        end
+    end
+
+    -- =========================
+    -- CRÉATION OBJET
+    -- =========================
     local self = setmetatable({}, RabbitBot)
 
     self.Model = model
@@ -18,33 +46,48 @@ function RabbitBot.new(model)
     pcall(function() self.Root:SetNetworkOwner(nil) end)
     self.Humanoid.AutoRotate = true
 
-    -- Stats vitales
+    -- =========================
+    -- STATS
+    -- =========================
     self.MaxHealth = 100
     self.Health = self.MaxHealth
     self.Satiety = 100
     self.Stress = 0
 
-    -- Paramètres IA
+    -- =========================
+    -- PARAMÈTRES IA
+    -- =========================
     self.panicRadius = 150
     self.fleeDistance = 80
     self.fleeSpeed = 28
     self.normalSpeed = 16
     self.fleeDuration = 3
 
-    -- États internes
+    -- =========================
+    -- ÉTATS
+    -- =========================
     self.state = "Idle"
     self.fleeState = nil
     self.jumpCooldown = 0
     self.jumpForce = 60
     self.upForce = 35
 
-    -- Pathfinding
+    -- =========================
+    -- PATHFINDING
+    -- =========================
     self.pathState = nil
     self.lastPathCompute = 0
 
-    -- Cache des spawn points de carottes
+    -- =========================
+    -- CARROTTES
+    -- =========================
     self._carrotSpawnPoints = {}
     self:_LoadCarrotSpawnPoints()
+
+    -- =========================
+    -- START IA
+    -- =========================
+    RabbitBT.Start(self)
 
     return self
 end

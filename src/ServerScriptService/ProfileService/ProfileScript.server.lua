@@ -64,7 +64,7 @@ local function DoSomethingWithALoadedProfile(player, profile)
 		print("No teleport data → fallback")
 		teleportData = {
 			nbPlayers = 1,
-			nbBots = 0,
+			nbBots = 10,
 			lobbyName = "DefaultLobby"
 		}
 	end
