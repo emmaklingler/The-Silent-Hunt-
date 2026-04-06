@@ -5,7 +5,7 @@ local PathfindingService = game:GetService("PathfindingService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
 local SoundManager = require(game.ServerScriptService.Sound.SoundManager)
-
+local NoiseServerEvent = game.ReplicatedStorage.Remote:WaitForChild("NoiseServerEvent")
 local ChangeStateRabbitEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateRabbitEvent")
 
 function RabbitBot.new(model)
@@ -114,7 +114,6 @@ function RabbitBot:Follow(position, timeout)
 
     -- Démarrage du pathfinding
     if not self.pathState then
-
         if os.clock() - self.lastPathCompute < 0.1 then
             return Status.RUNNING
         end
@@ -135,6 +134,17 @@ function RabbitBot:Follow(position, timeout)
         self:ChangeState("Running")
         self.Humanoid:MoveTo(waypoints[1].Position)
         return Status.RUNNING
+    end
+
+    -- 🔊 BRUIT émis pendant le déplacement (toutes les 2s)
+    if not self._nextNoiseTime or os.clock() > self._nextNoiseTime then
+        NoiseServerEvent:Fire({
+            position = self.Root.Position,
+            intensity = 1,
+            time = os.clock(),
+            source = nil
+        })
+        self._nextNoiseTime = os.clock() + 2
     end
 
     -- La cible a bougé → recalcul
