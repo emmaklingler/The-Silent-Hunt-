@@ -188,17 +188,25 @@ function RabbitBot:Follow(position, timeout)
 
         self.pathState = {
             waypoints = waypoints,
-            index = 1,
+            index = GetFirstValidWaypoint(self.Root, waypoints),  -- ← directement ici
             target = position,
             startTime = os.clock(),
             timeout = timeout,
         }
 
         self:ChangeState("Running")
+        self.Humanoid:MoveTo(self.pathState.waypoints[self.pathState.index].Position)
         local firstIndex = GetFirstValidWaypoint(self.Root, waypoints)
         self.Humanoid:MoveTo(waypoints[firstIndex].Position)
         self.pathState.index = firstIndex
+        if self.Humanoid.MoveDirection.Magnitude < 0.1 then
+            self:ChangeState("Idle")
+        else
+            self:ChangeState("Running")
+        end
+
         return Status.RUNNING
+        
     end
 
     -- 🔊 BRUIT émis pendant le déplacement (toutes les 2s)
@@ -303,9 +311,7 @@ end
 function RabbitBot:TryFlee(hunterPosition)
     if not self.Root or not hunterPosition then return Status.FAILURE end
 
-    -- Annule tout pathfinding en cours
-    self:StopMove(false)
-
+    -- Si fuite déjà en cours → on continue SANS toucher au pathfinding
     if self.fleeState then
         if os.clock() >= self.fleeState.endTime then
             self.fleeState = nil
@@ -315,6 +321,9 @@ function RabbitBot:TryFlee(hunterPosition)
         end
         return Status.RUNNING
     end
+
+    -- StopMove seulement au DÉBUT de la fuite
+    self:StopMove(false)
 
     print(string.format("[%s] 😱 FUITE ! Chasseur à %.0f studs",
         self.Model.Name,
@@ -342,7 +351,6 @@ function RabbitBot:TryFlee(hunterPosition)
 
     self.fleeState = { endTime = os.clock() + self.fleeDuration }
     self.Humanoid.WalkSpeed = self.fleeSpeed
-    -- ← MoveTo direct, pas de pathfinding
     self.Humanoid:MoveTo(fleeTarget)
     self:ChangeState("Running")
 
@@ -453,12 +461,18 @@ function RabbitBot:CanSeeHunter(hunterRoot)
 
     if result then
         local hitModel = result.Instance:FindFirstAncestorOfClass("Model")
-        return hitModel == hunterRoot.Parent
+        if hitModel ~= hunterRoot.Parent then
+            return false
+        end
+    end
+
+    -- Fuite immédiate sans attendre le BT
+    if not self.fleeState then
+        self:TryFlee(hunterRoot.Position)
     end
 
     return true
 end
-
 -- =====================================================
 -- ÉTATS ET UTILITAIRES
 -- =====================================================

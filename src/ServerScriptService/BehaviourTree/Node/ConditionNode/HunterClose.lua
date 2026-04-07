@@ -3,15 +3,9 @@ HunterClose.__index = HunterClose
 
 local Status = require(script.Parent.Parent.Utiles.Status)
 
---[[
-    Noeud HunterClose : vérifie si le chasseur est à portée ET visible (Raycast).
-    Met à jour blackboard.hunterRoot si le chasseur est détecté.
-
-    @param radius: number - rayon de détection (défaut: 60, doit correspondre à rabbit.panicRadius)
-]]
 function HunterClose.new(radius)
     local self = setmetatable({}, HunterClose)
-    self.radius = radius or 60
+    self.radius = radius or 150
     return self
 end
 
@@ -23,10 +17,15 @@ function HunterClose:Run(rabbit, blackboard)
     end
 
     local hunterRoot = hunter.HumanoidRootPart
-    local dist = (rabbit.Root.Position - hunterRoot.Position).Magnitude
 
-    -- Fuite d'urgence si très proche même sans ligne de vue
-    if dist <= 60 or (dist <= rabbit.panicRadius and rabbit:CanSeeHunter(hunterRoot)) then
+    if rabbit:CanSeeHunter(hunterRoot) then
+        blackboard.hunterRoot = hunterRoot
+        blackboard.lastSeenHunterTime = os.clock()
+        return Status.SUCCESS
+    end
+
+    -- Mémoire : garde le chasseur en tête pendant 3s après l'avoir perdu de vue
+    if blackboard.lastSeenHunterTime and (os.clock() - blackboard.lastSeenHunterTime) < 3 then
         blackboard.hunterRoot = hunterRoot
         return Status.SUCCESS
     end
