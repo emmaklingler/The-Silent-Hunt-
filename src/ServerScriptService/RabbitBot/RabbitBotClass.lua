@@ -61,7 +61,7 @@ function RabbitBot.spawn()
     -- =========================
     self.panicRadius = 150
     self.fleeDistance = 80
-    self.fleeSpeed = 28
+    self.fleeSpeed = 18
     self.normalSpeed = 16
     self.fleeDuration = 3
 
@@ -79,12 +79,6 @@ function RabbitBot.spawn()
     -- =========================
     self.pathState = nil
     self.lastPathCompute = 0
-
-    -- =========================
-    -- CARROTTES
-    -- =========================
-    self._carrotSpawnPoints = {}
-    self:_LoadCarrotSpawnPoints()
 
     -- =========================
     -- START IA
@@ -106,26 +100,7 @@ local function GetFirstValidWaypoint(root, waypoints)
     end
     return 1
 end
--- =====================================================
--- SPAWN POINTS
--- =====================================================
 
-function RabbitBot:_LoadCarrotSpawnPoints()
-    local spawnFolder = workspace:FindFirstChild("CarrotSpawn")
-    if not spawnFolder then
-        warn("[RabbitBot] Folder 'CarrotSpawn' introuvable dans le Workspace.")
-        return
-    end
-
-    for _, part in ipairs(spawnFolder:GetChildren()) do
-        if part:IsA("BasePart") or part:IsA("Model") then
-            local pos = part:IsA("Model") and part:GetPivot().Position or part.Position
-            table.insert(self._carrotSpawnPoints, pos)
-        end
-    end
-
-    print(string.format("[RabbitBot] %d spawn points de carottes mémorisés.", #self._carrotSpawnPoints))
-end
 
 -- =====================================================
 -- PATHFINDING
@@ -186,30 +161,25 @@ function RabbitBot:Follow(position, timeout)
             return Status.FAILURE
         end
 
+        local firstIndex = GetFirstValidWaypoint(self.Root, waypoints)
+
         self.pathState = {
             waypoints = waypoints,
-            index = GetFirstValidWaypoint(self.Root, waypoints),  -- ← directement ici
+            index = firstIndex,
             target = position,
             startTime = os.clock(),
             timeout = timeout,
         }
 
         self:ChangeState("Running")
-        self.Humanoid:MoveTo(self.pathState.waypoints[self.pathState.index].Position)
-        local firstIndex = GetFirstValidWaypoint(self.Root, waypoints)
         self.Humanoid:MoveTo(waypoints[firstIndex].Position)
-        self.pathState.index = firstIndex
-        if self.Humanoid.MoveDirection.Magnitude < 0.1 then
-            self:ChangeState("Idle")
-        else
-            self:ChangeState("Running")
-        end
+     
 
         return Status.RUNNING
         
     end
 
-    -- 🔊 BRUIT émis pendant le déplacement (toutes les 2s)
+    -- BRUIT émis pendant le déplacement (toutes les 2s)
     if not self._nextNoiseTime or os.clock() > self._nextNoiseTime then
         NoiseServerEvent:Fire({
             position = self.Root.Position,
@@ -218,12 +188,6 @@ function RabbitBot:Follow(position, timeout)
             source = nil
         })
         self._nextNoiseTime = os.clock() + 2
-    end
-
-    -- La cible a bougé → recalcul
-    if (self.pathState.target - position).Magnitude > 20 then
-        self:StopMove(false)
-        return Status.RUNNING
     end
 
     -- Timeout
@@ -250,10 +214,6 @@ function RabbitBot:Follow(position, timeout)
         end
 
         local next = self.pathState.waypoints[self.pathState.index]
-        if next.Action == Enum.PathWaypointAction.Jump then
-            self.Humanoid.Jump = true
-        end
-
         self.Humanoid:MoveTo(next.Position)
     end
 
@@ -285,7 +245,7 @@ function RabbitBot:GetClosestCarrot(maxDistance)
     local closest = nil
     local closestDist = maxDistance
 
-    for _, carrot in ipairs(carrotFolder:GetChildren()) do
+    for _, carrot in carrotFolder:GetChildren() do
         local part = nil
         if carrot:IsA("BasePart") then
             part = carrot
@@ -325,29 +285,8 @@ function RabbitBot:TryFlee(hunterPosition)
     -- StopMove seulement au DÉBUT de la fuite
     self:StopMove(false)
 
-    print(string.format("[%s] 😱 FUITE ! Chasseur à %.0f studs",
-        self.Model.Name,
-        (self.Root.Position - hunterPosition).Magnitude))
-
     local awayDir = (self.Root.Position - hunterPosition).Unit
-    local bestPoint = nil
-    local bestScore = -math.huge
-
-    for _, spawnPos in ipairs(self._carrotSpawnPoints) do
-        local toSpawn = (spawnPos - self.Root.Position)
-        local dist = toSpawn.Magnitude
-        if dist > 5 then
-            local dot = awayDir:Dot(toSpawn.Unit)
-            local distFromHunter = (spawnPos - hunterPosition).Magnitude
-            local score = dot * 2 + (distFromHunter / 100)
-            if score > bestScore then
-                bestScore = score
-                bestPoint = spawnPos
-            end
-        end
-    end
-
-    local fleeTarget = bestPoint or (self.Root.Position + awayDir * self.fleeDistance)
+    local fleeTarget = (self.Root.Position + awayDir * self.fleeDistance)
 
     self.fleeState = { endTime = os.clock() + self.fleeDuration }
     self.Humanoid.WalkSpeed = self.fleeSpeed
@@ -393,7 +332,6 @@ function RabbitBot:DansCachette()
     return false  
 end
 function RabbitBot:ActionEat(carrotPart)
-    print(string.format("[%s] 🥕 Mange une carotte ! Satiété: %.0f → 100", self.Model.Name, self.Satiety))
     if not carrotPart or not carrotPart.Parent then return false end
 
     self:StopMove()
@@ -500,7 +438,6 @@ function RabbitBot:Jump()
 end
 function RabbitBot:RemoveHealth(amount)
     self.Health = math.max(0, self.Health - amount)
-    print(string.format("[%s] 🩸 Touché ! -%.0f HP → Vie restante: %.0f/100", self.Model.Name, amount, self.Health))
     
     -- Force la fuite si pas déjà en train de fuir
     if self.Health > 0 and not self.fleeState then
@@ -512,7 +449,6 @@ function RabbitBot:RemoveHealth(amount)
 
     if self.Health <= 0 then
         self.Health = 0
-        print(string.format("[%s] 💀 Bot mort !", self.Model.Name))
         self.Model:Destroy()
     end
 end
