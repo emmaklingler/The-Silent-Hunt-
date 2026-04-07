@@ -670,16 +670,16 @@ end
 -- =====================================
 function Hunter:TryPlaceTrapAt()
 
-	print("\n=== [TRAP] TryPlaceTrapAt appelé ===")
+	-- print("\n=== [TRAP] TryPlaceTrapAt appelé ===")
 
 	-- =========================
 	-- PHASE 1 : EN COURS
 	-- =========================
 	if self.isPlacingTrap then
-		print("[TRAP] Placement en cours...")
+		-- print("[TRAP] Placement en cours...")
 
 		if os.clock() >= self.trapEndTime then
-			print("[TRAP] Fin animation → création du piège")
+			-- print("[TRAP] Fin animation → création du piège")
 
 			self.isPlacingTrap = false
 
@@ -692,7 +692,7 @@ function Hunter:TryPlaceTrapAt()
 			table.insert(self.ActiveTraps, trap)
 
 			self.trapsStock = math.max(0, self.trapsStock - 1)
-			print("[TRAP] Piège créé. Stock restant:", self.trapsStock)
+			-- print("[TRAP] Piège créé. Stock restant:", self.trapsStock)
 
 			self:ChangePoidStat("trapsStock")
 			self:ChangeState("Idle")
@@ -700,7 +700,7 @@ function Hunter:TryPlaceTrapAt()
 			return Status.SUCCESS
 		end
 
-		print("[TRAP] Toujours en animation...")
+		-- print("[TRAP] Toujours en animation...")
 		return Status.RUNNING
 	end
 

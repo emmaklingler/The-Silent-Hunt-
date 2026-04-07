@@ -6,10 +6,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Status = require(game.ServerScriptService.BehaviourTree.Node.Utiles.Status)
 local SoundManager = require(game.ServerScriptService.Sound.SoundManager)
 local RabbitBT = require(game.ServerScriptService.RabbitBot.RabbitBT)
-
+local NoiseServerEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("NoiseServerEvent")
 local ChangeStateRabbitEvent = ReplicatedStorage:WaitForChild("Remote"):WaitForChild("ChangeStateRabbitEvent")
 
 function RabbitBot.spawn()
+    local botNames = {"Floppy", "Caramel", "Noisette", "Pepper", "Mochi", "Biscuit", "Cannelle", "Peanut", "Coco", "Hazel"}
+
     -- =========================
     -- RÉCUP TEMPLATE
     -- =========================
@@ -19,7 +21,7 @@ function RabbitBot.spawn()
     -- CLONE
     -- =========================
     local model = template:Clone()
-    model.Name = "RabbitBot"
+    model.Name = botNames[math.random(1, #botNames)]
     model.Parent = workspace
 
     -- =========================
@@ -51,7 +53,7 @@ function RabbitBot.spawn()
     -- =========================
     self.MaxHealth = 100
     self.Health = self.MaxHealth
-    self.Satiety = 100
+    self.Satiety = math.random(30, 90)
     self.Stress = 0
 
     -- =========================
@@ -92,6 +94,18 @@ function RabbitBot.spawn()
     return self
 end
 
+local function GetFirstValidWaypoint(root, waypoints)
+    for i, wp in ipairs(waypoints) do
+        local dir = (wp.Position - root.Position)
+        if dir.Magnitude >= 4 then
+            local dot = root.CFrame.LookVector:Dot(dir.Unit)
+            if dot > 0 then
+                return i
+            end
+        end
+    end
+    return 1
+end
 -- =====================================================
 -- SPAWN POINTS
 -- =====================================================
@@ -125,14 +139,20 @@ end
 function RabbitBot:ComputePath(targetPosition)
     self.lastPathCompute = os.clock()
 
+    local groundedTarget = Vector3.new(
+        targetPosition.X,
+        self.Root.Position.Y,
+        targetPosition.Z
+    )
+
     local path = PathfindingService:CreatePath({
         AgentRadius = 4,
-        AgentHeight = 6,
+        AgentHeight = 10,   -- ← augmenter (était 6)
         AgentCanJump = false,
-        WaypointSpacing = 6,
+        WaypointSpacing = 8, -- ← même que le chasseur (était 6)
     })
 
-    path:ComputeAsync(self.Root.Position, targetPosition)
+    path:ComputeAsync(self.Root.Position, groundedTarget)
 
     if path.Status ~= Enum.PathStatus.Success then
         return nil
@@ -157,7 +177,7 @@ function RabbitBot:Follow(position, timeout)
 
     -- Démarrage du pathfinding
     if not self.pathState then
-        if os.clock() - self.lastPathCompute < 0.1 then
+        if os.clock() - self.lastPathCompute < 0.7 then
             return Status.RUNNING
         end
 
@@ -175,7 +195,9 @@ function RabbitBot:Follow(position, timeout)
         }
 
         self:ChangeState("Running")
-        self.Humanoid:MoveTo(waypoints[1].Position)
+        local firstIndex = GetFirstValidWaypoint(self.Root, waypoints)
+        self.Humanoid:MoveTo(waypoints[firstIndex].Position)
+        self.pathState.index = firstIndex
         return Status.RUNNING
     end
 
@@ -191,7 +213,7 @@ function RabbitBot:Follow(position, timeout)
     end
 
     -- La cible a bougé → recalcul
-    if (self.pathState.target - position).Magnitude > 8 then
+    if (self.pathState.target - position).Magnitude > 20 then
         self:StopMove(false)
         return Status.RUNNING
     end
@@ -219,7 +241,6 @@ function RabbitBot:Follow(position, timeout)
             return Status.SUCCESS
         end
 
-        -- Gestion saut si nécessaire
         local next = self.pathState.waypoints[self.pathState.index]
         if next.Action == Enum.PathWaypointAction.Jump then
             self.Humanoid.Jump = true
@@ -230,7 +251,6 @@ function RabbitBot:Follow(position, timeout)
 
     return Status.RUNNING
 end
-
 --[[
     Arrête le mouvement du lapin.
     @param anim: boolean - si true, repasse en Idle (défaut: true)
@@ -280,10 +300,10 @@ end
 -- =====================================================
 -- COMPORTEMENT DE SURVIE (FUITE)
 -- =====================================================
-
 function RabbitBot:TryFlee(hunterPosition)
     if not self.Root or not hunterPosition then return Status.FAILURE end
 
+    -- Annule tout pathfinding en cours
     self:StopMove(false)
 
     if self.fleeState then
@@ -296,24 +316,21 @@ function RabbitBot:TryFlee(hunterPosition)
         return Status.RUNNING
     end
 
-    -- Direction opposée au chasseur
-    local awayDir = (self.Root.Position - hunterPosition).Unit
+    print(string.format("[%s] 😱 FUITE ! Chasseur à %.0f studs",
+        self.Model.Name,
+        (self.Root.Position - hunterPosition).Magnitude))
 
-    -- Cherche le meilleur spawn point : loin du chasseur + dans la bonne direction
+    local awayDir = (self.Root.Position - hunterPosition).Unit
     local bestPoint = nil
     local bestScore = -math.huge
 
     for _, spawnPos in ipairs(self._carrotSpawnPoints) do
         local toSpawn = (spawnPos - self.Root.Position)
         local dist = toSpawn.Magnitude
-
-        if dist > 5 then  -- ignore les spawns trop proches
-            local dot = awayDir:Dot(toSpawn.Unit)  -- +1 = bonne direction, -1 = vers le chasseur
+        if dist > 5 then
+            local dot = awayDir:Dot(toSpawn.Unit)
             local distFromHunter = (spawnPos - hunterPosition).Magnitude
-
-            -- Score : favorise la bonne direction ET la distance au chasseur
             local score = dot * 2 + (distFromHunter / 100)
-
             if score > bestScore then
                 bestScore = score
                 bestPoint = spawnPos
@@ -321,17 +338,16 @@ function RabbitBot:TryFlee(hunterPosition)
         end
     end
 
-    -- Fallback si aucun spawn trouvé
     local fleeTarget = bestPoint or (self.Root.Position + awayDir * self.fleeDistance)
-    print(string.format("[RabbitBot] 😱 FUITE vers spawn point ! Chasseur à %.0f studs", (self.Root.Position - hunterPosition).Magnitude))
+
     self.fleeState = { endTime = os.clock() + self.fleeDuration }
     self.Humanoid.WalkSpeed = self.fleeSpeed
+    -- ← MoveTo direct, pas de pathfinding
+    self.Humanoid:MoveTo(fleeTarget)
     self:ChangeState("Running")
 
-    -- Utilise le pathfinding pour atteindre le point de fuite
-    return self:Follow(fleeTarget, self.fleeDuration)
+    return Status.RUNNING
 end
-
 -- =====================================================
 -- GESTION DES BESOINS (MANGER)
 -- =====================================================
@@ -347,7 +363,6 @@ function RabbitBot:GoToAndEat(carrot)
         return Status.FAILURE
     end
 
-    -- Distance horizontale seulement (ignore la hauteur)
     local flatDist = (
         Vector3.new(self.Root.Position.X, 0, self.Root.Position.Z) -
         Vector3.new(carrot.Position.X, 0, carrot.Position.Z)
@@ -370,7 +385,7 @@ function RabbitBot:DansCachette()
     return false  
 end
 function RabbitBot:ActionEat(carrotPart)
-    print(string.format("[RabbitBot] 🥕 Mange une carotte ! Satiété: %.0f → 100", self.Satiety))
+    print(string.format("[%s] 🥕 Mange une carotte ! Satiété: %.0f → 100", self.Model.Name, self.Satiety))
     if not carrotPart or not carrotPart.Parent then return false end
 
     self:StopMove()
@@ -392,16 +407,30 @@ end
     @return Status
 ]]
 function RabbitBot:Wander()
-    -- Pathfinding déjà en cours → continuer
     if self.pathState then
         return self:Follow(self.pathState.target)
     end
 
-    -- Nouvelle destination aléatoire
-    local offset = Vector3.new(math.random(-40, 40), 0, math.random(-40, 40))
-    local dest = self.Root.Position + offset
+    -- Plusieurs tentatives pour trouver une destination valide
+    for _ = 1, 5 do
+        local offset = Vector3.new(math.random(-40, 40), 0, math.random(-40, 40))
+        local dest = Vector3.new(
+            self.Root.Position.X + offset.X,
+            self.Root.Position.Y,  -- ← même hauteur que le lapin
+            self.Root.Position.Z + offset.Z
+        )
 
-    return self:Follow(dest, 8)
+        local result = self:Follow(dest, 8)
+        if result ~= Status.FAILURE then
+            return result
+        end
+        -- Si FAILURE → on reset et on réessaie avec une autre destination
+        self.pathState = nil
+        self.lastPathCompute = 0
+    end
+
+    -- Toutes les tentatives ont échoué → on attend
+    return Status.RUNNING
 end
 
 -- =====================================================
@@ -457,11 +486,19 @@ function RabbitBot:Jump()
 end
 function RabbitBot:RemoveHealth(amount)
     self.Health = math.max(0, self.Health - amount)
-    print(string.format("[RabbitBot] 🩸 Touché ! -%.0f HP → Vie restante: %.0f/100", amount, self.Health))
+    print(string.format("[%s] 🩸 Touché ! -%.0f HP → Vie restante: %.0f/100", self.Model.Name, amount, self.Health))
     
+    -- Force la fuite si pas déjà en train de fuir
+    if self.Health > 0 and not self.fleeState then
+        local hunter = workspace:FindFirstChild("Chasseur_Test")
+        if hunter and hunter:FindFirstChild("HumanoidRootPart") then
+            self:TryFlee(hunter.HumanoidRootPart.Position)
+        end
+    end
+
     if self.Health <= 0 then
         self.Health = 0
-        print("[RabbitBot] 💀 Bot mort !")
+        print(string.format("[%s] 💀 Bot mort !", self.Model.Name))
         self.Model:Destroy()
     end
 end

@@ -23,8 +23,10 @@ function HunterClose:Run(rabbit, blackboard)
     end
 
     local hunterRoot = hunter.HumanoidRootPart
+    local dist = (rabbit.Root.Position - hunterRoot.Position).Magnitude
 
-    if rabbit:CanSeeHunter(hunterRoot) then
+    -- Fuite d'urgence si très proche même sans ligne de vue
+    if dist <= 60 or (dist <= rabbit.panicRadius and rabbit:CanSeeHunter(hunterRoot)) then
         blackboard.hunterRoot = hunterRoot
         return Status.SUCCESS
     end
