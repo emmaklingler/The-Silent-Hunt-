@@ -1,0 +1,33 @@
+Itération V – IA des Bots & Finitions UX/UIFonctionnalités développées
+
+Le Behaviour Tree du Lapin bot a été implémenté avec une structure de Selector et Sequence identique à celle du chasseur. 
+Ce bot peut fuir le chasseur via raycast, chercher de la nourriture quand sa satiété tombe sous 70 et errer aléatoirement. 
+L'Utility AI du chasseur a été étendue pour couvrir la poursuite, le ravitaillement et l'exploration. 
+L'interface inclut désormais une mini-carte, une barre de temps, un cycle jour/nuit et des règles du jeu complètes. 
+Le jeu est également devenu jouable sur mobile.
+
+Cas d’utilisationCU1 --> Survie du bot lapin : 
+Le bot détecte le chasseur par raycast et déclenche une action de fuite.
+CU2 – Gestion des besoins : Si sa satiété est inférieure à 70, le bot interrompt son errance pour aller manger une carotte.
+CU3 – Décision du chasseur : L'Utility AI calcule si le chasseur doit poursuivre ou se ravitailler selon son énergie et ses munitions.
+CU4 – Information joueur : Le joueur utilise la mini-carte et consulte le temps restant via la barre UI pour planifier sa survie.
+CU5 – Interaction sonore : Le bot émet un bruit en se déplaçant, ce qui permet au chasseur de le localiser via son système de perception.
+
+Côté joueur lapin
+
+Le joueur voit les bots lapins se déplacer autour de lui sur la carte
+Le joueur peut utiliser les bots comme leurres pour distraire le chasseur en se mettant pres d'eux pour que le chasseur change de cible
+Le joueur voit les bots fuir quand le chasseur approche, ce qui lui sert d'alarme visuelle
+Le joueur peut observer les bots manger des carottes et savoir où elles se trouvent
+
+Côté chasseur
+
+Le chasseur doit maintenant gérer plusieurs cibles en même temps (joueurs + bots)
+Le chasseur entend les bruits de déplacement des bots et peut les confondre avec des joueurs
+Le chasseur peut tirer sur les bots et gaspiller ses munitions
+
+Côté gameplay global
+
+Avec des bots, la partie peut se jouer même avec peu de joueurs humains, la carte semble plus vivante et moins vide
+Le timer de partie est plus tendu car le chasseur a plus de cibles à gérer
+Le lobby permet de choisir le nombre de bots pour ajuster la difficulté

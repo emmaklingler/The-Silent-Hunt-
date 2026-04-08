@@ -42,6 +42,7 @@ RunService.Heartbeat:Connect(function()
         end
 
         UpdatePerception(rabbit, blackboard)
+        
         data.tree:Run(rabbit, blackboard)  -- ← arbre propre à chaque bot
     end
 end)

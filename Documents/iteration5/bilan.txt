@@ -1,0 +1,18 @@
+Itération V – BilanBilan
+
+L’itération 5 a permis de rendre le chasseur et les bots opérationnels grâce à une architecture de Behaviour Tree cohérente et extensible. 
+L'IA du lapin bot a été finalisée, intégrant la fuite intelligente, la consommation de carottes et l'émission de bruits détectables. 
+Côté interface, l'expérience utilisateur est enrichie par une mini-carte, un compteur de joueurs, une barre de temps, les bordures de map améliorées et un cycle jour/nuit. 
+Enfin, le débogage a permis au chasseur de gérer plusieurs lapins simultanément et de stabiliser les connexions.
+
+
+Difficultés rencontrées:
+
+L'équipe a été impactée par la perte d'un équipier. 
+Le temps de développement a été sous-estimé, ce qui a conduit à simplifier les fonctions d'utility et à conserver des attributs non dynamiques pour le chasseur.
+
+
+Conclusion
+
+Le projet dispose désormais d'une base solide pour de futures améliorations. 
+L'objectif de l'itération suivante sera de rendre l'IA encore plus performante et de finaliser le rapport.
