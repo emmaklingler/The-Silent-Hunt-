@@ -20,7 +20,6 @@ local ChangeStateRabbitEvent = Remote:WaitForChild("ChangeStateRabbitEvent")
 local botTracks = {}
 
 ChangeStateRabbitEvent.OnClientEvent:Connect(function(botModel, state)
-    print(botModel, state)
     if not botModel or not botModel.Parent or botModel == Players.LocalPlayer.Character then return end
     
     local humanoid = botModel:FindFirstChild("Humanoid")
