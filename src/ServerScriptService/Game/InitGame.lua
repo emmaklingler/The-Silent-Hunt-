@@ -313,6 +313,7 @@ function GameManager:StartGame(teleportData)
 
     -- 4. Spawn RabbitBot (IA)
     for i = 1, teleportData.nbBots do
+        print('s')
         local rabbitBot = RabbitBotClass.spawn()
         PlayerManager:AddBot(rabbitBot) -- Ajoute le bot à la liste des cibles pour la détection du chasseur
     end
